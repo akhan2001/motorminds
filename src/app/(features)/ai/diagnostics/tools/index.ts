@@ -59,6 +59,7 @@ export const getTools = async ({
 			getRelatedWiringDiagrams,
 			getOEMComponents,
 			getRelatedOEMComponents,
+			helloWorld,
 			...publicMotorTools
 		} = motorTools
 

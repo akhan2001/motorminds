@@ -5,6 +5,7 @@ import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, FileText, ChevronRight } from 'lucide-react'
 import { useChatContextOptional } from '../Chat.Context'
 import { cn } from '@/lib/utils'
+import { ComponentLocationToolRenderer } from './ComponentLocationToolRenderer'
 
 interface ServiceProceduresToolRendererProps {
 	toolPart: {
@@ -95,6 +96,24 @@ export function ServiceProceduresToolRenderer({ toolPart }: ServiceProceduresToo
 
 	// Success state with output
 	if (state === 'output-available' && output && parsedResult) {
+		if (parsedResult.switchToComponentLocation && parsedResult.component) {
+			return (
+				<ComponentLocationToolRenderer
+					toolPart={{
+						type: 'tool-showComponentLocation',
+						state: 'output-available',
+						output: {
+							component: parsedResult.component,
+							confidence: parsedResult.confidence,
+							possibleIssue: parsedResult.possibleIssue,
+							explanation: parsedResult.explanation,
+							userPrompt: parsedResult.userPrompt || input?.query,
+						},
+					}}
+				/>
+			)
+		}
+
 		// Check if request failed
 		if (parsedResult.success === false) {
 			return (

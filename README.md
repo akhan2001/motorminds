@@ -141,3 +141,40 @@ motorminds/
 ├── docs/                     # Private documentation (ignored by Git)
 ├── supabase/                 # Supabase configuration
 └── public/                   # Static assets
+
+## AI Diagnostics 3D Locator MVP
+
+This repository includes a focused proof-of-concept integrated into the diagnostics session chat tool-renderer flow:
+
+`user location request -> AI showComponentLocation tool call -> embedded 3D message block -> part highlight`
+
+### Architecture
+
+- `src/app/(features)/ai/diagnostics/components/ChatArea.tsx`
+  - Keeps diagnostics layout stable (header + panel); no out-of-band 3D insertion.
+- `src/app/(features)/ai/diagnostics/components/tool-renderers/ComponentLocationToolRenderer.tsx`
+  - Embedded expandable/closeable 3D location block rendered inside the conversation stream.
+- `src/app/(features)/ai/diagnostics/tools/rendering-tools.ts`
+  - Defines `showComponentLocation` tool used by AI to signal in-message 3D location rendering.
+- `src/app/(features)/ai/diagnostics/components/locator3d/VehicleDiagnosticsViewer.tsx`
+  - React Three Fiber canvas, GLB loading, mesh highlighting, orbit/zoom controls, and camera focus.
+- `src/lib/services/diagnostics-3d-locator-service.ts`
+  - Deterministic symptom-to-component inference and strict Zod schema enforcement.
+- `src/lib/services/diagnostics-3d-component-map.ts`
+  - Canonical component IDs mapped to deterministic mesh names and tooltip labels.
+
+### 3D Asset
+
+- `public/models/diagnostics-demo-car.glb`
+  - Lightweight generic car model for MVP visualization.
+  - Contains named zones:
+    - `mesh_battery_zone`
+    - `mesh_starter_zone`
+    - `mesh_alternator_zone`
+    - `mesh_fuse_box_zone`
+
+To regenerate the model:
+
+```bash
+node scripts/generate-diagnostics-demo-model.mjs
+```

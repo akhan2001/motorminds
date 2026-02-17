@@ -12,6 +12,7 @@ import { RelatedDiagramsToolRenderer } from './tool-renderers/RelatedDiagramsToo
 import { PerplexityResearchToolRenderer } from './tool-renderers/PerplexityResearchToolRenderer'
 import { ServiceProceduresToolRenderer } from './tool-renderers/ServiceProceduresToolRenderer'
 import { ServiceProcedureDetailsToolRenderer } from './tool-renderers/ServiceProcedureDetailsToolRenderer'
+import { ComponentLocationToolRenderer } from './tool-renderers/ComponentLocationToolRenderer'
 
 // Type definitions based on AI SDK v5 structure
 type TextUIPart = { type: 'text'; text: string }
@@ -215,6 +216,10 @@ function MessagePartServiceProcedureDetails({ toolPart }: { toolPart: ToolUIPart
 	return <ServiceProcedureDetailsToolRenderer toolPart={toolPart} />
 }
 
+function MessagePartComponentLocation({ toolPart }: { toolPart: ToolUIPart }) {
+	return <ComponentLocationToolRenderer toolPart={toolPart} />
+}
+
 const MessagePart = {
 	Text: MessagePartText,
 	Dynamic: MessagePartDynamicTool,
@@ -229,6 +234,7 @@ const MessagePart = {
 	PerplexityResearch: MessagePartPerplexityResearch,
 	ServiceProcedures: MessagePartServiceProcedures,
 	ServiceProcedureDetails: MessagePartServiceProcedureDetails,
+	ComponentLocation: MessagePartComponentLocation,
 } as const
 
 export function MessagePartSwitcher({
@@ -268,6 +274,9 @@ export function MessagePartSwitcher({
 		}
 		case 'tool-getServiceProcedureDetails': {
 			return <MessagePart.ServiceProcedureDetails toolPart={part as ToolUIPart} />
+		}
+		case 'tool-showComponentLocation': {
+			return <MessagePart.ComponentLocation toolPart={part as ToolUIPart} />
 		}
 		case 'reasoning':
 			return <MessagePart.Reasoning reasoningPart={part as ReasoningUIPart} />
