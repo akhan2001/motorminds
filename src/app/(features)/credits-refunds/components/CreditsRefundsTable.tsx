@@ -70,7 +70,6 @@ export function CreditsRefundsTable({
                             <TableHead>Description / Reason</TableHead>
                             <TableHead className="w-[120px] text-right">Amount</TableHead>
                             <TableHead className="w-[120px]">Status</TableHead>
-                            <TableHead className="w-[150px]">Related</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -90,9 +89,6 @@ export function CreditsRefundsTable({
                                 </TableCell>
                                 <TableCell>
                                     <Skeleton className="h-5 w-20 rounded-full" />
-                                </TableCell>
-                                <TableCell>
-                                    <Skeleton className="h-4 w-16" />
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -131,7 +127,6 @@ export function CreditsRefundsTable({
                             <TableHead>Description / Reason</TableHead>
                             <TableHead className="w-[120px] text-right">Amount</TableHead>
                             <TableHead className="w-[120px]">Status</TableHead>
-                            <TableHead className="w-[150px]">Related Expense</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -153,11 +148,9 @@ export function CreditsRefundsTable({
                                 </TableCell>
                                 <TableCell>
                                     <div className="text-foreground">
-                                        {item.related_expense
-                                            ? item.related_expense.description
-                                            : item.description || item.reason}
+                                        {item.description || item.reason}
                                     </div>
-                                    {!item.related_expense && (item.part_number || item.invoice_number) && (
+                                    {(item.part_number || item.invoice_number) && (
                                         <div className="text-xs text-muted-foreground">
                                             {[item.part_number && `Part #: ${item.part_number}`, item.invoice_number && `Inv #: ${item.invoice_number}`]
                                                 .filter(Boolean)
@@ -177,25 +170,6 @@ export function CreditsRefundsTable({
                                     </div>
                                 </TableCell>
                                 <TableCell>{getStatusBadge(item.status)}</TableCell>
-                                <TableCell>
-                                    <div className="text-muted-foreground text-sm">
-                                        {item.related_expense ? (
-                                            <span
-                                                title={`${item.related_expense.description} • ${item.related_expense.vendor || 'N/A'}`}
-                                                className="truncate max-w-[180px] block"
-                                            >
-                                                {item.related_expense.description}
-                                                {item.related_expense.work_order_id && (
-                                                    <span className="text-xs ml-1">(WO)</span>
-                                                )}
-                                            </span>
-                                        ) : item.related_expense_id ? (
-                                            'Expense linked'
-                                        ) : (
-                                            '-'
-                                        )}
-                                    </div>
-                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

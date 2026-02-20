@@ -35,7 +35,6 @@ export const CreateCreditRefundSchema = z.object({
     supplier: z.string().max(200).nullable().optional(),
     supplier_id: z.string().uuid().nullable().optional(),
     reason: z.string().trim().min(1, 'Reason is required').max(500),
-    related_expense_id: z.string().uuid().nullable().optional(),
     part_number: z.string().max(100).nullable().optional(),
     description: z.string().max(500).nullable().optional(),
     parts_description: z.string().max(1000).nullable().optional(),

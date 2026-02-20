@@ -34,8 +34,6 @@ export async function PUT(
         if (body.supplier !== undefined) updateData.supplier = body.supplier?.trim() || null
         if (body.supplier_id !== undefined) updateData.supplier_id = body.supplier_id || null
         if (body.reason !== undefined) updateData.reason = body.reason?.trim()
-        if (body.related_expense_id !== undefined)
-            updateData.related_expense_id = body.related_expense_id || null
         if (body.status !== undefined) updateData.status = body.status
         if (body.refund_date !== undefined)
             updateData.refund_date = body.refund_date.split('T')[0]

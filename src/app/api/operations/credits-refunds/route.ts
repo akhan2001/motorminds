@@ -87,7 +87,6 @@ export async function POST(req: NextRequest) {
             supplier,
             supplier_id,
             reason,
-            related_expense_id,
             refund_date,
             notes,
         } = body
@@ -117,7 +116,6 @@ export async function POST(req: NextRequest) {
             supplier: supplier?.trim() || null,
             supplier_id: supplier_id || null,
             reason: reason.trim(),
-            related_expense_id: related_expense_id || null,
             status: 'pending',
             refund_date: refund_date.split('T')[0],
             notes: notes?.trim() || null,

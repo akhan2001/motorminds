@@ -21,8 +21,6 @@ import {
     getValidNextStatuses,
 } from '../lib/validations/credit-refund-schema'
 import type { CreditRefundItem, CreditRefundStatus } from '../types/credits-refunds'
-import { ExpensesService } from '@/app/(features)/expenses/lib/expenses-service'
-import ExpenseSelector from './ExpenseSelector'
 import {
     DollarSign,
     Building2,
@@ -33,7 +31,6 @@ import {
     FileCheck,
     Loader2,
     History,
-    Receipt,
 } from 'lucide-react'
 
 interface CreditRefundDetailDialogProps {
@@ -62,19 +59,6 @@ export function CreditRefundDetailDialog({
     })
     const displayCreditRefund = creditRefundData ?? creditRefund
 
-    const { data: relatedExpense } = useQuery({
-        queryKey: ['expense', creditRefund?.related_expense_id],
-        queryFn: () =>
-            ExpensesService.getExpense(
-                displayCreditRefund!.related_expense_id!,
-                shopId
-            ),
-        enabled:
-            isOpen &&
-            !!displayCreditRefund?.related_expense_id &&
-            !!shopId,
-    })
-
     const { data: history = [] } = useQuery({
         queryKey: ['creditsRefunds', 'history', creditRefund?.id],
         queryFn: () =>
@@ -88,7 +72,7 @@ export function CreditRefundDetailDialog({
             data,
         }: {
             id: string
-            data: { status?: CreditRefundStatus; related_expense_id?: string | null }
+            data: { status?: CreditRefundStatus }
         }) => CreditsRefundsService.updateCreditRefund(id, shopId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -144,7 +128,7 @@ export function CreditRefundDetailDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden bg-slate-50 dark:bg-card border-border text-foreground">
                 <DialogHeader className="shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                         Credit/Refund Details
@@ -192,25 +176,7 @@ export function CreditRefundDetailDialog({
                         <p className="text-foreground mt-1">{displayCreditRefund.reason}</p>
                     </div>
 
-                    {relatedExpense ? (
-                        <div>
-                            <Label className="text-muted-foreground text-xs flex items-center gap-1">
-                                <Receipt className="h-3 w-3" />
-                                Linked expense (as-is from expenses)
-                            </Label>
-                            <p className="text-foreground mt-1 font-medium">
-                                {relatedExpense.description}
-                            </p>
-                            {relatedExpense.vendor && (
-                                <p className="text-muted-foreground text-sm mt-0.5">
-                                    {relatedExpense.vendor} • {formatCurrency(relatedExpense.total)}
-                                </p>
-                            )}
-                            {relatedExpense.work_order_id && (
-                                <p className="text-xs text-muted-foreground">Work order expense</p>
-                            )}
-                        </div>
-                    ) : (displayCreditRefund.description || displayCreditRefund.part_number || displayCreditRefund.invoice_number || displayCreditRefund.parts_description) && (
+                    {(displayCreditRefund.description || displayCreditRefund.part_number || displayCreditRefund.invoice_number || displayCreditRefund.parts_description) && (
                         <div>
                             <Label className="text-muted-foreground text-xs flex items-center gap-1">
                                 <FileText className="h-3 w-3" />
@@ -248,37 +214,6 @@ export function CreditRefundDetailDialog({
                             </p>
                         </div>
                     )}
-
-                    <div>
-                        <Label className="text-muted-foreground text-xs flex items-center gap-1">
-                            <Receipt className="h-3 w-3" />
-                            Related Expense
-                        </Label>
-                        <div className="mt-2">
-                            <ExpenseSelector
-                                shopId={shopId || null}
-                                value={displayCreditRefund.related_expense_id || ''}
-                                onValueChange={(expenseId) => {
-                                    updateMutation.mutate({
-                                        id: displayCreditRefund.id,
-                                        data: {
-                                            related_expense_id:
-                                                expenseId || null,
-                                        },
-                                    })
-                                }}
-                                placeholder="Link to expense (optional)"
-                                label=""
-                                className="bg-white dark:bg-background border-border text-foreground"
-                            />
-                        </div>
-                        {relatedExpense && (
-                            <p className="text-muted-foreground text-xs mt-1">
-                                {relatedExpense.description} •{' '}
-                                {formatCurrency(relatedExpense.total)}
-                            </p>
-                        )}
-                    </div>
 
                     <Separator />
 

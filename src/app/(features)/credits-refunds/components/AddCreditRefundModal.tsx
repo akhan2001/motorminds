@@ -98,7 +98,6 @@ export default function AddCreditRefundModal({
             reason: reason.trim(),
             refund_date: refundDate,
             notes: notes.trim() || null,
-            related_expense_id: null,
             description: description.trim() || null,
             part_number: partNumber.trim() || null,
             invoice_number: invoiceNumber.trim() || null,

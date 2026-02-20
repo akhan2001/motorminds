@@ -5,15 +5,6 @@
 
 export type CreditRefundStatus = 'pending' | 'processed' | 'reconciled'
 
-export interface RelatedExpenseInfo {
-    id: string
-    description: string
-    vendor: string | null
-    total: number
-    expense_date: string
-    work_order_id: string | null
-}
-
 export interface CreditRefundItem {
     id: string
     shop_id: string
@@ -21,15 +12,13 @@ export interface CreditRefundItem {
     supplier: string | null
     supplier_id: string | null
     reason: string
-    related_expense_id: string | null
-    related_expense?: RelatedExpenseInfo | null
-    /** Part number - for standalone credits (not expense-linked) */
+    /** Part number */
     part_number?: string | null
-    /** Description - for standalone credits (not expense-linked) */
+    /** Description */
     description?: string | null
-    /** Parts description - for standalone credits (not expense-linked) */
+    /** Parts description */
     parts_description?: string | null
-    /** Invoice number - for standalone credits (not expense-linked) */
+    /** Invoice number */
     invoice_number?: string | null
     status: CreditRefundStatus
     refund_date: string
@@ -46,14 +35,13 @@ export interface CreateCreditRefundRequest {
     supplier?: string | null
     supplier_id?: string | null
     reason: string
-    related_expense_id?: string | null
-    /** Part number - required for standalone credits (when no related_expense_id) */
+    /** Part number */
     part_number?: string | null
-    /** Description - required for standalone credits (when no related_expense_id) */
+    /** Description - required */
     description?: string | null
-    /** Parts description - optional for standalone credits */
+    /** Parts description */
     parts_description?: string | null
-    /** Invoice number - optional for standalone credits */
+    /** Invoice number */
     invoice_number?: string | null
     status?: CreditRefundStatus
     refund_date: string
@@ -65,7 +53,6 @@ export interface UpdateCreditRefundRequest {
     supplier?: string | null
     supplier_id?: string | null
     reason?: string
-    related_expense_id?: string | null
     part_number?: string | null
     description?: string | null
     parts_description?: string | null

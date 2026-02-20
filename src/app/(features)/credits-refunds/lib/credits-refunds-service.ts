@@ -21,11 +21,7 @@ export class CreditsRefundsService {
         try {
             let query = this.supabase
                 .from('credits_refunds')
-                .select(
-                    `
-                    *,
-                    related_expense:expenses!related_expense_id(id, description, vendor, total, expense_date, work_order_id)
-                    `,
+                .select('*',
                     { count: 'exact' }
                 )
                 .eq('shop_id', shopId)
@@ -108,10 +104,7 @@ export class CreditsRefundsService {
         try {
             const { data, error } = await this.supabase
                 .from('credits_refunds')
-                .select(
-                    `*,
-                    related_expense:expenses!related_expense_id(id, description, vendor, total, expense_date, work_order_id)`
-                )
+                .select('*')
                 .eq('id', id)
                 .eq('shop_id', shopId)
                 .single()
@@ -146,9 +139,8 @@ export class CreditsRefundsService {
             if (!data.amount || data.amount <= 0) {
                 throw new Error('Amount must be greater than 0')
             }
-            // Standalone credits (no related expense) require description
-            if (!data.related_expense_id && !data.description?.trim()) {
-                throw new Error('Description is required for standalone credits/refunds')
+            if (!data.description?.trim()) {
+                throw new Error('Description is required')
             }
 
             const insertData = {
@@ -157,7 +149,6 @@ export class CreditsRefundsService {
                 supplier: data.supplier || null,
                 supplier_id: data.supplier_id || null,
                 reason: data.reason.trim(),
-                related_expense_id: data.related_expense_id || null,
                 part_number: data.part_number?.trim() || null,
                 description: data.description?.trim() || null,
                 parts_description: data.parts_description?.trim() || null,
