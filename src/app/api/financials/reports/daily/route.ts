@@ -178,6 +178,20 @@ export async function GET(req: NextRequest) {
             paymentMethodBreakdown[method].amount += data.amount;
         });
 
+        // Fetch credits/refunds for the day (processed or reconciled - money flowing back in)
+        const { data: creditsRefundsData } = await supabase
+            .from('credits_refunds')
+            .select('amount')
+            .eq('shop_id', shopId)
+            .in('status', ['processed', 'reconciled'])
+            .eq('refund_date', targetDate)
+            .or('archived.eq.false,archived.is.null');
+
+        const creditsRefundsTotal = (creditsRefundsData || []).reduce(
+            (sum, c) => sum + Number(c.amount || 0),
+            0
+        );
+
         // Calculate totals (invoice revenue + advance payments for the day)
         const invoiceRevenue = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.total_amount) || 0), 
@@ -227,6 +241,7 @@ export async function GET(req: NextRequest) {
                 totalSubtotal,
                 totalTax,
                 advancePaymentsTotal,
+                creditsRefundsTotal,
             },
             paymentMethods,
             vehiclesServiced,

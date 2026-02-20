@@ -33,10 +33,21 @@ import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/Expens
 import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
 
+interface CreditRefundItem {
+	id: string;
+	supplier: string;
+	reason: string;
+	amount: number;
+	refund_date: string;
+	status: string;
+	notes: string;
+}
+
 interface ExpenseReportData {
 	generalExpenses: GeneralExpense[];
 	workOrderExpenses: WorkOrderExpense[];
 	partsExpenses: PartsExpense[];
+	creditsRefunds?: CreditRefundItem[];
 	summary: {
 		generalExpenses: {
 			count: number;
@@ -57,7 +68,12 @@ interface ExpenseReportData {
 			paidTotalCost: number;
 			totalProfit: number;
 		};
+		creditsRefunds?: {
+			count: number;
+			total: number;
+		};
 		grandTotal: number;
+		netExpenses?: number;
 	};
 	startDate: string;
 	endDate: string;
@@ -181,7 +197,7 @@ const ReportsPage = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFetchingData, setIsFetchingData] = useState(false);
 	const [reportData, setReportData] = useState<ExpenseReportData | null>(null);
-	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts' | 'credits'>('general');
 	const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
 	const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -366,12 +382,33 @@ const ReportsPage = () => {
 		rows.push(['', '', '', '', '', 'TOTAL', reportData.summary.partsExpenses.totalCost.toFixed(2), '', reportData.summary.partsExpenses.totalProfit.toFixed(2), '']);
 		rows.push([]);
 
+		// Credits & Refunds
+		if (reportData.creditsRefunds && reportData.creditsRefunds.length > 0) {
+			rows.push(['CREDITS & REFUNDS']);
+			rows.push(['Date', 'Supplier', 'Reason', 'Amount', 'Status']);
+			reportData.creditsRefunds.forEach(cr => {
+				rows.push([
+					formatDate(cr.refund_date),
+					cr.supplier,
+					cr.reason,
+					cr.amount.toFixed(2),
+					cr.status
+				]);
+			});
+			rows.push(['', '', 'TOTAL', (reportData.summary.creditsRefunds?.total ?? 0).toFixed(2), '']);
+			rows.push([]);
+		}
+
 		// Summary
 		rows.push(['SUMMARY']);
 		rows.push(['General Expenses', reportData.summary.generalExpenses.total.toFixed(2)]);
 		rows.push(['Work Order Expenses', reportData.summary.workOrderExpenses.total.toFixed(2)]);
 		rows.push(['Parts Costs', reportData.summary.partsExpenses.totalCost.toFixed(2)]);
 		rows.push(['GRAND TOTAL', reportData.summary.grandTotal.toFixed(2)]);
+		if (reportData.summary.creditsRefunds && reportData.summary.creditsRefunds.total > 0) {
+			rows.push(['Credits & Refunds', `-${reportData.summary.creditsRefunds.total.toFixed(2)}`]);
+			rows.push(['NET EXPENSES', (reportData.summary.netExpenses ?? reportData.summary.grandTotal).toFixed(2)]);
+		}
 
 		const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -490,7 +527,7 @@ const ReportsPage = () => {
 							) : reportData ? (
 								<>
 									{/* Summary Cards */}
-									<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 										<SummaryCard
 											title="General Expenses"
 											count={reportData.summary.generalExpenses.count}
@@ -512,14 +549,24 @@ const ReportsPage = () => {
 											icon={Package}
 											subtext={`${formatCurrency(reportData.summary.partsExpenses.totalProfit)} profit`}
 										/>
+										{reportData.summary.creditsRefunds && reportData.summary.creditsRefunds.count > 0 && (
+											<SummaryCard
+												title="Credits & Refunds"
+												count={reportData.summary.creditsRefunds.count}
+												total={reportData.summary.creditsRefunds.total}
+												icon={Undo2}
+												subtext="inflow"
+												className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+											/>
+										)}
 										<SummaryCard
-											title="Total Expenses"
+											title={reportData.summary.netExpenses !== undefined ? "Net Expenses" : "Total Expenses"}
 											count={
 												reportData.summary.generalExpenses.count +
 												reportData.summary.workOrderExpenses.count +
 												reportData.summary.partsExpenses.count
 											}
-											total={reportData.summary.grandTotal}
+											total={reportData.summary.netExpenses ?? reportData.summary.grandTotal}
 											icon={DollarSign}
 											className="bg-slate-100 dark:bg-slate-800"
 										/>
@@ -562,6 +609,17 @@ const ReportsPage = () => {
 													)}
 												>
 													Parts Costs ({reportData.partsExpenses.length})
+												</button>
+												<button
+													onClick={() => setActiveTab('credits')}
+													className={cn(
+														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+														activeTab === 'credits'
+															? "border-blue-500 text-blue-600"
+															: "border-transparent text-muted-foreground hover:text-foreground"
+													)}
+												>
+													Credits & Refunds ({reportData.creditsRefunds?.length ?? 0})
 												</button>
 											</div>
 										</CardHeader>
@@ -845,6 +903,51 @@ const ReportsPage = () => {
 														</table>
 													) : (
 														<p className="text-center py-8 text-muted-foreground">No parts costs in this period.</p>
+													)}
+												</div>
+											)}
+
+											{/* Credits & Refunds Table */}
+											{activeTab === 'credits' && (
+												<div className="overflow-x-auto">
+													{(reportData.creditsRefunds?.length ?? 0) > 0 ? (
+														<table className="w-full text-sm">
+															<thead>
+																<tr className="border-b border-border text-left">
+																	<th className="pb-2 font-medium text-muted-foreground">Date</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Supplier</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Reason</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Amount</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
+																</tr>
+															</thead>
+															<tbody>
+																{(reportData.creditsRefunds ?? []).map((cr) => (
+																	<tr key={cr.id} className="border-b border-border/50">
+																		<td className="py-3">{formatDate(cr.refund_date)}</td>
+																		<td className="py-3">{cr.supplier}</td>
+																		<td className="py-3">{cr.reason}</td>
+																		<td className="py-3 text-right font-medium text-green-600 dark:text-green-400">{formatCurrency(cr.amount)}</td>
+																		<td className="py-3 text-center">
+																			<Badge variant="outline" className="text-xs capitalize">
+																				{cr.status}
+																			</Badge>
+																		</td>
+																	</tr>
+																))}
+															</tbody>
+															<tfoot>
+																<tr className="font-medium">
+																	<td colSpan={3} className="pt-3 text-right">Total:</td>
+																	<td className="pt-3 text-right text-green-600 dark:text-green-400">
+																		{formatCurrency(reportData.summary.creditsRefunds?.total ?? 0)}
+																	</td>
+																	<td></td>
+																</tr>
+															</tfoot>
+														</table>
+													) : (
+														<p className="text-center py-8 text-muted-foreground">No credits or refunds in this period.</p>
 													)}
 												</div>
 											)}

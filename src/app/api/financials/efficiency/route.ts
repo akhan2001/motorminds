@@ -125,8 +125,20 @@ export async function GET(req: NextRequest) {
         const totalOneTimeCosts = filteredOneTimeCosts.reduce((acc, c) => acc + c.amount, 0);
         const totalOneTimeCostsSubtotal = filteredOneTimeCosts.reduce((acc, c) => acc + (c.subtotal || c.amount), 0);
         const totalOneTimeCostsTax = filteredOneTimeCosts.reduce((acc, c) => acc + (c.tax_amount || 0), 0);
+
+        // Fetch credits/refunds (money flowing back in - reduces net costs)
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+        const { data: creditsRefundsData } = await supabase
+            .from('credits_refunds')
+            .select('amount')
+            .eq('shop_id', shopId)
+            .or('archived.eq.false,archived.is.null')
+            .gte('refund_date', startDateStr)
+            .lte('refund_date', endDateStr);
+        const creditsRefundsTotal = (creditsRefundsData || []).reduce((acc, c) => acc + Number(c.amount || 0), 0);
         
-        const totalOperatingExpenses = totalRecurringCosts + totalOneTimeCosts + totalCogs;
+        const totalOperatingExpenses = totalRecurringCosts + totalOneTimeCosts + totalCogs - creditsRefundsTotal;
         
         const netProfit = totalRevenue - totalOperatingExpenses;
 
@@ -185,6 +197,7 @@ export async function GET(req: NextRequest) {
                 cogs: totalCogs,
                 recurring: totalRecurringCosts,
                 oneTime: totalOneTimeCosts,
+                creditsRefunds: -creditsRefundsTotal, // negative = inflow
             },
             // Expense tax breakdown (for reports)
             expenseTaxBreakdown: {
