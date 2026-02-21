@@ -314,12 +314,40 @@ export async function GET(req: NextRequest) {
         const partsExpensesPaidTotal = partsExpensesPaid.reduce((sum, e) => sum + e.total_cost, 0);
         const partsProfitTotal = processedPartsExpenses.reduce((sum, e) => sum + e.profit, 0);
 
+        // 10b. Fetch credits/refunds for the date range (money flowing back in)
+        const { data: creditsRefundsData, error: creditsError } = await supabase
+            .from('credits_refunds')
+            .select('*')
+            .eq('shop_id', shopId)
+            .or('archived.eq.false,archived.is.null')
+            .gte('refund_date', startDateStr)
+            .lte('refund_date', endDateStr)
+            .order('refund_date', { ascending: false });
+
+        if (creditsError) {
+            console.error('Credits/refunds fetch error:', creditsError);
+        }
+
+        const creditsRefunds = creditsRefundsData || [];
+        const creditsRefundsTotal = creditsRefunds.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+        const processedCreditsRefunds = creditsRefunds.map((item: any) => ({
+            id: item.id,
+            supplier: item.supplier || 'N/A',
+            reason: item.reason,
+            amount: Number(item.amount) || 0,
+            refund_date: item.refund_date,
+            status: item.status,
+            notes: item.notes || '',
+        }));
+
         const grandTotal = generalExpensesTotal + workOrderExpensesTotal + partsExpensesTotal;
+        const netExpenses = grandTotal - creditsRefundsTotal;
 
         return NextResponse.json({
             generalExpenses: processedGeneralExpenses,
             workOrderExpenses: processedWorkOrderExpenses,
             partsExpenses: processedPartsExpenses,
+            creditsRefunds: processedCreditsRefunds,
             summary: {
                 generalExpenses: {
                     count: processedGeneralExpenses.length,
@@ -340,7 +368,12 @@ export async function GET(req: NextRequest) {
                     paidTotalCost: partsExpensesPaidTotal,
                     totalProfit: partsProfitTotal,
                 },
+                creditsRefunds: {
+                    count: processedCreditsRefunds.length,
+                    total: creditsRefundsTotal,
+                },
                 grandTotal,
+                netExpenses,
             },
             startDate,
             endDate,

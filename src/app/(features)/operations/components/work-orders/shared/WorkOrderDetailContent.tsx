@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Wrench, Calendar, DollarSign, User, Car, Package, Clock, MapPin, Tag, FileText, Archive, Receipt, Undo2 } from 'lucide-react'
@@ -293,6 +294,12 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                     <div className={isRefunded ? 'opacity-60' : ''}>
                                         <ExpenseSummaryCard expense={expense} />
                                     </div>
+                                    <Link
+                                        href="/credits-refunds"
+                                        className="text-xs text-green-600 dark:text-green-400 hover:underline mt-1 inline-block"
+                                    >
+                                        Record credit/refund for this expense
+                                    </Link>
                                     {isRefunded && expense.refund_amount > 0 && (
                                         <div className="mt-2 text-right text-xs text-green-600 dark:text-green-400">
                                             Refund: {formatCurrency(expense.refund_amount)}

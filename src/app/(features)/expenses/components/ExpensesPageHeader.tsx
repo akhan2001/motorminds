@@ -1,9 +1,10 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Undo2 } from 'lucide-react'
 import AddExpenseModal from './AddExpenseModal'
 
 interface ExpensesPageHeaderProps {
@@ -48,6 +49,12 @@ export function ExpensesPageHeader({
                 </p>
             </div>
             <div className="flex items-center gap-4">
+                <Link href="/credits-refunds">
+                    <Button variant="outline" size="sm">
+                        <Undo2 className="h-4 w-4 mr-2" />
+                        Credits & Refunds
+                    </Button>
+                </Link>
                 {shopId && (
                     <AddExpenseModal shopId={shopId} onExpenseAdded={onExpenseAdded}>
                         <Button className="bg-red-600 hover:bg-red-700 text-white">
