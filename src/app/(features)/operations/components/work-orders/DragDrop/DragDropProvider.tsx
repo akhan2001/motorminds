@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { DragDropContext, DragDropContextType } from './DragDropContext'
 import { WorkOrderKanbanItem, WorkOrderStatus, WorkOrder } from '../../../types/work-order'
-import { useUpdateWorkOrder, useUpdateWorkOrderStatus } from '../../../hooks/use-work-orders'
+import { useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from '../../../hooks/use-work-orders'
 import { toast } from 'sonner'
 import { RevertWorkOrderDialog } from '../revert-work-order-dialog'
 import { workOrderService } from '../../../lib/work-order-service'
@@ -31,6 +31,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
     
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
+    const deleteWorkOrderMutation = useDeleteWorkOrder()
 
     const startDrag = useCallback((item: WorkOrderKanbanItem) => {
         setDraggedItem(item)
@@ -55,6 +56,21 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
     }, [])
 
     const handleDrop = useCallback(async (item: WorkOrderKanbanItem, targetColumn: string, targetIndex: number) => {
+        // Handle archive column - use existing archive service
+        if (targetColumn === 'archived') {
+            try {
+                await deleteWorkOrderMutation.mutateAsync({
+                    id: item.id,
+                    options: { deleteInvoice: false }
+                })
+                onWorkOrderUpdate?.(item.id, 'archived')
+            } catch (error) {
+                console.error('Failed to archive work order:', error)
+                // Toast already shown by useDeleteWorkOrder
+            }
+            return
+        }
+
         // Map column IDs to status values
         const statusMap: Record<string, WorkOrderStatus> = {
             'pending': 'pending',
@@ -143,7 +159,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             console.error('Failed to update work order status:', error)
             toast.error('Failed to update work order status')
         }
-    }, [updateWorkOrderMutation, onWorkOrderUpdate, onWorkOrderCompletionAttempt, onWorkOrderReadyAttempt])
+    }, [updateWorkOrderMutation, deleteWorkOrderMutation, onWorkOrderUpdate, onWorkOrderCompletionAttempt, onWorkOrderReadyAttempt])
 
     const handleRevertConfirm = useCallback(async () => {
         if (!pendingRevertItem) return

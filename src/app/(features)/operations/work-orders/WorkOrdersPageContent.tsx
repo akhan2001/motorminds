@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/use-auth'
 import { useWorkOrdersWithDetails } from '../hooks/use-work-orders'
+import { useCanDeleteWorkOrders } from '../hooks/work-orders/use-work-order-permissions'
 import { useWorkOrderStats } from '../hooks/use-work-order-stats'
 import { useWorkOrderPageState } from '../hooks/use-work-order-page-state'
 import { useWorkOrderOperations } from '../hooks/use-work-order-operations'
@@ -22,16 +23,13 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
  * Handles authentication, data fetching, and state management
  * Passes data to the presentational component
  */
-// Roles that can delete work orders and invoices
-const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
-
 export function WorkOrdersPageContent() {
     // Authentication
-    const { user, shopId, userRole, isLoading: authLoading } = useAuth()
+    const { user, shopId, isLoading: authLoading } = useAuth()
     const router = useRouter()
-    
-    // Check if current user can delete (admin only)
-    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
+
+    // Use backend permission check (admins, super-admins, shop owners can delete/archive)
+    const { data: canDelete = false } = useCanDeleteWorkOrders(shopId ?? undefined)
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -39,8 +37,12 @@ export function WorkOrdersPageContent() {
     // Transform work orders to kanban format
     const kanbanData = useMemo(() => {
         if (!workOrders) return []
-        return transformWorkOrdersToKanbanColumns(workOrders)
-    }, [workOrders])
+        const columns = transformWorkOrdersToKanbanColumns(workOrders)
+        if (canDelete) {
+            columns.push({ id: 'archived', title: '', color: 'bg-gray-500', items: [] })
+        }
+        return columns
+    }, [workOrders, canDelete])
 
     // Calculate stats using custom hook
     const stats = useWorkOrderStats(kanbanData)

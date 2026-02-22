@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { WorkOrderKanbanColumn, WorkOrderKanbanItem } from '../../types/work-order'
-import { DroppableColumn } from './DragDrop'
+import { DroppableColumn, ArchivedColumn } from './DragDrop'
 
 export interface WorkOrderKanbanProps {
     columns: WorkOrderKanbanColumn[]
@@ -22,12 +22,21 @@ export const WorkOrderKanban: React.FC<WorkOrderKanbanProps> = ({
         <div className={`h-full bg-background min-h-0 ${className}`}>
             <div className="h-full flex min-h-0">
                 {columns.map((column) => (
-                    <DroppableColumn 
-                        key={column.id} 
-                        column={column} 
-                        onCardClick={onCardClick} 
-                        isCompactView={isCompactView} 
-                    />
+                    column.id === 'archived' ? (
+                        <ArchivedColumn
+                            key={column.id}
+                            column={column}
+                            onCardClick={onCardClick}
+                            isCompactView={isCompactView}
+                        />
+                    ) : (
+                        <DroppableColumn 
+                            key={column.id} 
+                            column={column} 
+                            onCardClick={onCardClick} 
+                            isCompactView={isCompactView} 
+                        />
+                    )
                 ))}
             </div>
         </div>
