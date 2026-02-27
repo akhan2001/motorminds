@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
 import { Controller, useWatch } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,7 +37,22 @@ export function VendorSection({
         control: form.control,
         name: `items.${index}.vendor`,
     })
-    const isCustomVendor = vendor && !activeSuppliers.find((s) => s.name === vendor)
+    const [selectedSupplierId, setSelectedSupplierId] = useState<string>(() => {
+        const match = activeSuppliers.find((s) => s.name === vendor)
+        return match?.id ?? (vendor ? 'custom' : '')
+    })
+    const justSelectedCustomRef = useRef(false)
+
+    useEffect(() => {
+        if (justSelectedCustomRef.current) {
+            justSelectedCustomRef.current = false
+            return
+        }
+        const match = activeSuppliers.find((s) => s.name === vendor)
+        setSelectedSupplierId(match?.id ?? (vendor ? 'custom' : ''))
+    }, [vendor, activeSuppliers])
+
+    const showCustomVendorInput = selectedSupplierId === 'custom'
 
     return (
         <div className="space-y-3">
@@ -47,11 +63,12 @@ export function VendorSection({
                     name={`items.${index}.vendor`}
                     render={({ field }) => (
                         <SupplierDropdownSelector
-                            value={
-                                activeSuppliers.find((s) => s.name === field.value)?.id ??
-                                (field.value ? 'custom' : '')
-                            }
+                            value={selectedSupplierId}
                             onValueChange={(supplierId: string) => {
+                                setSelectedSupplierId(supplierId)
+                                if (supplierId === 'custom') {
+                                    justSelectedCustomRef.current = true
+                                }
                                 const selected = activeSuppliers.find(
                                     (s) => s.id === supplierId
                                 )
@@ -69,14 +86,17 @@ export function VendorSection({
                     )}
                 />
             </div>
-            {isCustomVendor && (
+            {showCustomVendorInput && (
                 <div>
-                    <Label className="text-foreground text-sm">Custom Vendor Name</Label>
+                    <Label htmlFor={`customVendor_${index}`} className="text-foreground text-sm">
+                        Custom Vendor Name
+                    </Label>
                     <Controller
                         control={form.control}
                         name={`items.${index}.vendor`}
                         render={({ field }) => (
                             <Input
+                                id={`customVendor_${index}`}
                                 {...field}
                                 value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value)}
