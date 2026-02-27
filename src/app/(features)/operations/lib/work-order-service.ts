@@ -28,8 +28,8 @@ export class WorkOrderService {
 
     // GET work orders with customer and vehicle details for display
     // Fetches ALL active work orders (pending, approved, in_progress, waiting_parts, waiting_customer, ready)
-    // and recent completed/invoiced work orders (last 90 days)
-    async getWorkOrdersWithDetails(shopId: string, limit: number = 100, offset: number = 0): Promise<WorkOrderWithDetails[]> {
+    // and ALL completed/invoiced work orders (no limit)
+    async getWorkOrdersWithDetails(shopId: string): Promise<WorkOrderWithDetails[]> {
         const baseQuery = `
             id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
             customer:customers(id, customer_name, customer_phone, customer_email),
@@ -55,21 +55,14 @@ export class WorkOrderService {
             throw new Error(`Failed to fetch active work orders: ${activeError.message}`)
         }
 
-        // Calculate date 90 days ago for recent completed/invoiced work orders
-        const ninetyDaysAgo = new Date()
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-        const ninetyDaysAgoISO = ninetyDaysAgo.toISOString()
-
-        // Fetch recent completed/invoiced work orders (last 90 days, with limit)
+        // Fetch ALL completed/invoiced work orders (no limit)
         const { data: completedWorkOrders, error: completedError } = await this.supabase
             .from('work_orders')
             .select(baseQuery)
             .eq('shop_id', shopId)
             .eq('archived', false)
             .in('status', ['completed', 'invoiced'])
-            .gte('completed_at', ninetyDaysAgoISO) // Only recent completed ones
             .order('completed_at', { ascending: false })
-            .limit(limit)
 
         if (completedError) {
             console.error('Error fetching completed work orders with details:', completedError)
