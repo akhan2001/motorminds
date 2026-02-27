@@ -28,8 +28,8 @@ export class WorkOrderService {
 
     // GET work orders with customer and vehicle details for display
     // Fetches ALL active work orders (pending, approved, in_progress, waiting_parts, waiting_customer, ready)
-    // and ALL completed/invoiced work orders (no limit)
-    async getWorkOrdersWithDetails(shopId: string): Promise<WorkOrderWithDetails[]> {
+    // and completed/invoiced work orders (all or past 90 days based on completedFilter)
+    async getWorkOrdersWithDetails(shopId: string, completedFilter: 'all' | '90days' = 'all'): Promise<WorkOrderWithDetails[]> {
         const baseQuery = `
             id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
             customer:customers(id, customer_name, customer_phone, customer_email),
@@ -55,14 +55,24 @@ export class WorkOrderService {
             throw new Error(`Failed to fetch active work orders: ${activeError.message}`)
         }
 
-        // Fetch ALL completed/invoiced work orders (no limit)
-        const { data: completedWorkOrders, error: completedError } = await this.supabase
+        // Build completed/invoiced query - apply 90-day filter when requested
+        let completedQuery = this.supabase
             .from('work_orders')
             .select(baseQuery)
             .eq('shop_id', shopId)
             .eq('archived', false)
             .in('status', ['completed', 'invoiced'])
             .order('completed_at', { ascending: false })
+
+        if (completedFilter === '90days') {
+            const ninetyDaysAgo = new Date()
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+            completedQuery = completedQuery
+                .gte('completed_at', ninetyDaysAgo.toISOString())
+                .limit(100)
+        }
+
+        const { data: completedWorkOrders, error: completedError } = await completedQuery
 
         if (completedError) {
             console.error('Error fetching completed work orders with details:', completedError)

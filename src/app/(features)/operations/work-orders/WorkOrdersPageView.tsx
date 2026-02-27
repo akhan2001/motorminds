@@ -44,6 +44,8 @@ const ModalSkeleton = () => (
     </div>
 )
 
+type CompletedFilter = 'all' | '90days'
+
 interface WorkOrdersPageViewProps {
     // Data
     kanbanData: WorkOrderKanbanColumn[]
@@ -51,6 +53,11 @@ interface WorkOrdersPageViewProps {
     completionWorkOrder: WorkOrderWithDetails | null
     readyWorkOrder: WorkOrderWithDetails | null
     shopId: string
+
+    // Work order settings
+    completedFilter: CompletedFilter
+    onCompletedFilterChange: (value: CompletedFilter) => void
+    onSettingsChange?: () => void
 
     // State
     isCompactView: boolean
@@ -96,6 +103,9 @@ export function WorkOrdersPageView({
     completionWorkOrder,
     readyWorkOrder,
     shopId,
+    completedFilter,
+    onCompletedFilterChange,
+    onSettingsChange,
     isCompactView,
     isModalOpen,
     isCreateModalOpen,
@@ -137,6 +147,9 @@ export function WorkOrdersPageView({
             <div className="h-screen flex flex-col bg-background">
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <WorkOrderHeader
+                        completedFilter={completedFilter}
+                        onCompletedFilterChange={onCompletedFilterChange}
+                        onSettingsChange={onSettingsChange}
                         isCompactView={isCompactView}
                         onToggleView={onToggleView}
                         onNewWorkOrder={onNewWorkOrder}

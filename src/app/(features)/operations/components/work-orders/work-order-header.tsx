@@ -3,14 +3,19 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket, Package, Building2, Undo2 } from 'lucide-react'
+import { Plus, Maximize2, Minimize2, Layers, Archive, Package, Building2, Undo2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { InfoDialogButton, workOrdersInfo } from '@/components/shared/info-dialogs'
+import { PageSettingsDialog } from '@/components/shared/page-settings'
+import { WorkOrderSettingsDialog } from './WorkOrderSettingsDialog'
+
+type CompletedFilter = 'all' | '90days'
 
 interface WorkOrderHeaderProps {
     className?: string
+    completedFilter?: CompletedFilter
+    onCompletedFilterChange?: (value: CompletedFilter) => void
+    onSettingsChange?: () => void
     isCompactView?: boolean
     onToggleView?: () => void
     onNewWorkOrder?: () => void
@@ -20,6 +25,9 @@ interface WorkOrderHeaderProps {
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     className,
+    completedFilter = 'all',
+    onCompletedFilterChange,
+    onSettingsChange,
     isCompactView = false,
     onToggleView,
     onNewWorkOrder,
@@ -46,12 +54,16 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-2xl font-bold text-foreground">Work Orders</h1>
-                                <InfoDialogButton
-                                    title="How Work Orders Work"
-                                    description="Learn about managing work orders in Motorminds"
-                                    content={workOrdersInfo}
-                                    tooltip="Learn about Work Orders"
-                                />
+                                <PageSettingsDialog
+                                    title="Work Order Settings"
+                                    tooltip="Work order settings"
+                                >
+                                    <WorkOrderSettingsDialog
+                                        completedFilter={completedFilter}
+                                        onCompletedFilterChange={onCompletedFilterChange ?? (() => {})}
+                                        onSettingsChange={onSettingsChange}
+                                    />
+                                </PageSettingsDialog>
                             </div>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Manage and track all work orders
@@ -109,7 +121,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
             {/* Action Buttons Bar */}
             <div className="px-6 pb-3">
                 <div className="flex items-center gap-2">
-                    {/* Messages Button */}
+                    {/* Messages Button
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -127,7 +139,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                 <p>Open messaging hub to view templates and queue</p>
                             </TooltipContent>
                         </Tooltip>
-                    </TooltipProvider>
+                    </TooltipProvider>*/}
 
                     {/* Items Templates Button */}
                     <Button
@@ -140,7 +152,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                         Items Templates
                     </Button>
 
-                    {/* Status Trackers Button */}
+                    {/* Status Trackers Button
                     <Button
                         variant="outline"
                         size="sm"
@@ -149,7 +161,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Palette className="h-4 w-4 mr-2" />
                         Status Trackers
-                    </Button>
+                    </Button> */}
 
                     {/* Archived Work Orders Button */}
                     <Button

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/use-auth'
@@ -31,8 +31,20 @@ export function WorkOrdersPageContent() {
     // Use backend permission check (admins, super-admins, shop owners can delete/archive)
     const { data: canDelete = false } = useCanDeleteWorkOrders(shopId ?? undefined)
 
+    // Work order settings - persisted in localStorage
+    const [completedFilter, setCompletedFilter] = useState<'all' | '90days'>(() => {
+        if (typeof window === 'undefined') return 'all'
+        return (localStorage.getItem('work-orders-completed-filter') as 'all' | '90days') || 'all'
+    })
+    useEffect(() => {
+        localStorage.setItem('work-orders-completed-filter', completedFilter)
+    }, [completedFilter])
+    const handleCompletedFilterChange = useCallback((value: 'all' | '90days') => {
+        setCompletedFilter(value)
+    }, [])
+
     // Data fetching - only fetch if we have a valid shopId
-    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
+    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '', completedFilter)
 
     // Transform work orders to kanban format
     const kanbanData = useMemo(() => {
@@ -490,6 +502,9 @@ export function WorkOrdersPageContent() {
             completionWorkOrder={pageState.completionWorkOrder}
             readyWorkOrder={pageState.readyWorkOrder}
             shopId={shopId}
+            completedFilter={completedFilter}
+            onCompletedFilterChange={handleCompletedFilterChange}
+            onSettingsChange={refetch}
             isCompactView={pageState.isCompactView}
             isModalOpen={pageState.isModalOpen}
             isCreateModalOpen={pageState.isCreateModalOpen}
