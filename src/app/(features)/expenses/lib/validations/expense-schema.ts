@@ -190,6 +190,8 @@ export const ExpenseListItemSchema = z.object({
     expense_date: z.string().min(1, 'Date is required'),
     warranty_period: z.string().max(50).nullable().optional(),
     notes: z.string().max(1000).nullable().optional(),
+    /** UI-only: part id when expense was created from a part (for one-to-one tracking). Not persisted. */
+    sourcePartId: z.string().optional(),
 })
 
 export const ExpenseListFormSchema = z.object({

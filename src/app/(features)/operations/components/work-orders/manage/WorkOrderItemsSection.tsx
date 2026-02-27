@@ -1,7 +1,8 @@
 // Unified items section component
 'use client'
 
-import { forwardRef, useCallback, useMemo } from 'react'
+import React, { forwardRef, useCallback, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
@@ -11,6 +12,9 @@ import { useExpensesByWorkOrder } from '@/app/(features)/expenses/hooks/use-expe
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
 import { formatCurrency } from '@/lib/utils/currency'
 import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
+import type { ExpenseListItemFormData } from '@/app/(features)/expenses/lib/validations/expense-schema'
+import type { ExpenseListItemFormData } from '@/app/(features)/expenses/lib/validations/expense-schema'
+import { partToExpenseItem } from '../../../lib/part-to-expense'
 
 interface WorkOrderItemsSectionProps {
     itemsByType: {
@@ -37,6 +41,7 @@ export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderIt
     onItemSaved,
     onItemDeleted,
 }, ref) {
+    const [partIdsWithExpense, setPartIdsWithExpense] = useState<Set<string>>(new Set())
     const { data: workOrderExpenses = [] } = useExpensesByWorkOrder(workOrderId)
     const expensesTotalFromTable = useMemo(
         () =>
@@ -109,6 +114,34 @@ export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderIt
         onItemsChange('package', items)
     }, [onItemsChange])
 
+    const handleCreateExpenseFromPart = useCallback(
+        (part: PartFormItem, partIndex: number) => {
+            if (partIdsWithExpense.has(part.id)) {
+                toast.error('This part already has an expense')
+                return
+            }
+            const expenseItem = partToExpenseItem(part, partIndex)
+            const appended = (ref as React.RefObject<ExpenseItemsListRef | null>)?.current?.appendItem(expenseItem)
+            if (!appended) {
+                toast.error('Maximum 20 expense items allowed')
+                return
+            }
+            setPartIdsWithExpense((prev) => new Set(prev).add(part.id))
+            toast.success('Expense created from part')
+        },
+        [partIdsWithExpense, ref]
+    )
+
+    const handleExpenseItemRemoved = useCallback((item: ExpenseListItemFormData) => {
+        if (item.sourcePartId) {
+            setPartIdsWithExpense((prev) => {
+                const next = new Set(prev)
+                next.delete(item.sourcePartId!)
+                return next
+            })
+        }
+    }, [])
+
     return (
         <div className="bg-slate-50 dark:bg-[#131313] border border-border rounded-lg p-4 space-y-6">
             <h3 className="text-lg font-semibold text-foreground">Work Order Items</h3>
@@ -129,6 +162,8 @@ export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderIt
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
+                onCreateExpenseFromPart={handleCreateExpenseFromPart}
+                partIdsWithExpense={partIdsWithExpense}
             />
 
             <ExpenseItemsList
@@ -138,6 +173,7 @@ export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderIt
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
+                onItemRemoved={handleExpenseItemRemoved}
             />
 
             {/* Show legacy Services only if they exist - read-only with delete capability */}

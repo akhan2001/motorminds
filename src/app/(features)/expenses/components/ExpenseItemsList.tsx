@@ -54,11 +54,15 @@ export interface ExpenseItemsListProps {
     isEditing?: boolean
     onItemSaved?: (item: ExpenseItem) => void
     onItemDeleted?: (id: string) => void
+    /** Called when an item is removed (e.g. to clear part-to-expense tracking) */
+    onItemRemoved?: (item: ExpenseListItemFormData) => void
 }
 
 export interface ExpenseItemsListRef {
     /** Persist all expense items (create new, update existing, delete removed). Call from parent Save button. */
     persistAll: (options?: { workOrderId?: string | null; invoiceId?: string | null }) => Promise<boolean>
+    /** Append an expense item (e.g. from "Create Expense" from part). Returns false if at max items. */
+    appendItem: (item: ExpenseListItemFormData) => boolean
 }
 
 export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsListProps>(function ExpenseItemsList({
@@ -68,6 +72,7 @@ export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsList
     isEditing = true,
     onItemSaved,
     onItemDeleted,
+    onItemRemoved,
 }, ref) {
     const { shopId } = useAuth()
     const deletedIdsRef = useRef<string[]>([])
@@ -138,8 +143,9 @@ export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsList
             if (!id.startsWith(TEMP_ID_PREFIX)) {
                 deletedIdsRef.current = [...deletedIdsRef.current, id]
             }
+            onItemRemoved?.(item)
         },
-        [form, remove]
+        [form, remove, onItemRemoved]
     )
 
     const buildPayload = useCallback(
@@ -247,7 +253,18 @@ export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsList
         onItemDeleted,
     ])
 
-    useImperativeHandle(ref, () => ({ persistAll }), [persistAll])
+    const appendItem = useCallback(
+        (item: ExpenseListItemFormData): boolean => {
+            if (fields.length >= 20) {
+                return false
+            }
+            append(item)
+            return true
+        },
+        [fields.length, append]
+    )
+
+    useImperativeHandle(ref, () => ({ persistAll, appendItem }), [persistAll, appendItem])
 
     return (
         <div className="space-y-4">
