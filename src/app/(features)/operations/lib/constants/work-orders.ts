@@ -135,6 +135,17 @@ export function getPriorityLabel(priority: string): string {
 }
 
 /**
+ * Archived column configuration (non-status column)
+ * Drop zone only - always empty
+ */
+export const ARCHIVED_COLUMN_CONFIG = {
+    id: 'archived',
+    title: '',
+    color: 'bg-gray-500',
+    isArchiveColumn: true,
+} as const
+
+/**
  * Kanban column configuration
  * Defines the columns displayed in the work orders Kanban board
  */

@@ -150,8 +150,7 @@ export const DroppableColumn: React.FC<DroppableColumnProps> = (props) => {
             transition={{ duration: 0.3 }}
             style={{
                 minWidth: 0, // Prevent flex items from overflowing
-                flex: '1 1 0', // Equal width columns
-                maxWidth: '25%' // Strict 4-column grid
+                flex: '1 1 0', // Share space with other status columns (archive column has fixed width)
             }}
         >
             <KanbanColumn {...props} />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense, useRef } from "react"
+import { useState, Suspense, useRef, useCallback } from "react"
 import { toast } from "sonner"
 import { Package, FileText } from "lucide-react"
 
@@ -33,6 +33,8 @@ const PanelProvider = dynamic(
 // import { WalkInVehicleForm } from "./WalkInVehicleForm"
 import { useWorkOrderCreateForm } from "./hooks/use-work-order-create-form"
 import { useCreateTemplateManagement } from "./hooks/use-create-template-management"
+import { partToExpenseItem } from "../../../lib/part-to-expense"
+import type { ExpenseListItemFormData } from "@/app/(features)/expenses/lib/validations/expense-schema"
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
@@ -47,6 +49,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     shopId
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [partIdsWithExpense, setPartIdsWithExpense] = useState<Set<string>>(new Set())
     const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     // Mock technician options (replace with actual data fetching if needed)
@@ -113,6 +116,34 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const handleGenericItemSaved = (item: any) => {
         toast.success(`${item.item_type} item "${item.description}" saved successfully`)
     }
+
+    const handleCreateExpenseFromPart = useCallback(
+        (part: { id: string; description: string; part_number?: string; quantity: number; unit_price: number; total_price: number; unit_cost?: number; total_cost?: number; supplier?: string; category?: string; warranty_period?: string; notes?: string }, partIndex: number) => {
+            if (partIdsWithExpense.has(part.id)) {
+                toast.error('This part already has an expense')
+                return
+            }
+            const expenseItem = partToExpenseItem(part, partIndex)
+            const appended = expensesListRef.current?.appendItem(expenseItem)
+            if (!appended) {
+                toast.error('Maximum 20 expense items allowed')
+                return
+            }
+            setPartIdsWithExpense((prev) => new Set(prev).add(part.id))
+            toast.success('Expense created from part')
+        },
+        [partIdsWithExpense]
+    )
+
+    const handleExpenseItemRemoved = useCallback((item: ExpenseListItemFormData) => {
+        if (item.sourcePartId) {
+            setPartIdsWithExpense((prev) => {
+                const next = new Set(prev)
+                next.delete(item.sourcePartId!)
+                return next
+            })
+        }
+    }, [])
 
     const handleSave = async () => {
         setIsSubmitting(true)
@@ -388,6 +419,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         onItemsChange={handlePartsItemsChange}
                                                         workOrderId={undefined} // No workOrderId for creation
                                                         onItemSaved={handlePartItemSaved}
+                                                        onCreateExpenseFromPart={handleCreateExpenseFromPart}
+                                                        partIdsWithExpense={partIdsWithExpense}
                                                     />
                                                 </div>
 
@@ -399,6 +432,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         sourceType="work_order"
                                                         isEditing={true}
                                                         onItemSaved={handleExpenseItemSaved}
+                                                        onItemRemoved={handleExpenseItemRemoved}
                                                     />
                                                 </div>
 

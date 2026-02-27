@@ -208,14 +208,14 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(item.priority)} flex-shrink-0 mt-1`} />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button
+                                {/*<Button
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0 hover:bg-accent dark:hover:bg-[#2a2a2a]"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <Palette className="h-3 w-3 text-muted-foreground" />
-                                </Button>
+                                </Button>*/}
                             </DropdownMenuTrigger>
                             <DropdownMenuContent 
                                 align="end" 

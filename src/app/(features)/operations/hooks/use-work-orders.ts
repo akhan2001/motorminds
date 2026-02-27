@@ -44,10 +44,10 @@ export function useWorkOrdersByStatus(shopId: string, status: WorkOrderStatus) {
     })
 }
 
-export function useWorkOrdersWithDetails(shopId: string) {
+export function useWorkOrdersWithDetails(shopId: string, completedFilter: 'all' | '90days' = 'all') {
     return useQuery({
-        queryKey: [...workOrderKeys.list(shopId), 'with-details'],
-        queryFn: () => workOrderService.getWorkOrdersWithDetails(shopId),
+        queryKey: [...workOrderKeys.list(shopId), 'with-details', completedFilter],
+        queryFn: () => workOrderService.getWorkOrdersWithDetails(shopId, completedFilter),
         staleTime: 5 * 60 * 1000,
         enabled: !!shopId && shopId !== '', // Only enable if shopId is valid (not empty)
     })

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 
-import { Plus, Trash2, Package, BookmarkPlus, Save, Loader2 } from "lucide-react";
+import { Plus, Trash2, Package, BookmarkPlus, Save, Loader2, Receipt } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 
@@ -50,6 +50,10 @@ interface WorkOrderPartsItemsProps {
     onItemSaved?: (item: WorkOrderItem) => void; // Callback when item is saved to database
     onItemDeleted?: (itemId: string) => void; // Callback when item is deleted from database
     isEditing?: boolean; // Whether the work order is in edit mode
+    /** Create an expense from this part (one-to-one). Part id must not be in partIdsWithExpense. */
+    onCreateExpenseFromPart?: (item: PartFormItem, partIndex: number) => void;
+    /** Part ids that already have an expense (one-to-one mapping). */
+    partIdsWithExpense?: Set<string>;
 }
 
 export function WorkOrderPartsItems({ 
@@ -58,7 +62,9 @@ export function WorkOrderPartsItems({
     workOrderId, 
     onItemSaved,
     onItemDeleted,
-    isEditing = true
+    isEditing = true,
+    onCreateExpenseFromPart,
+    partIdsWithExpense,
 }: WorkOrderPartsItemsProps) {
 
     const { shopId } = useAuth();
@@ -321,7 +327,7 @@ export function WorkOrderPartsItems({
                                 </div>
                                 {isEditing && (
                                     <div className="flex items-center gap-2">
-                                        {item.description && item.unit_price > 0 && (
+                                        {item.description && item.unit_price > 0 && item.quantity > 0 && (
                                             <Button
                                                 type="button"
                                                 onClick={() => openSaveTemplateDialog(item)}
@@ -331,6 +337,19 @@ export function WorkOrderPartsItems({
                                             >
                                                 <BookmarkPlus className="h-4 w-4 mr-1" />
                                                 Save Template
+                                            </Button>
+                                        )}
+                                        {onCreateExpenseFromPart && item.description && item.unit_price > 0 && item.quantity > 0 && !partIdsWithExpense?.has(item.id) && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => onCreateExpenseFromPart(item, index)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-orange-300 dark:border-orange-500/50 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 h-8 px-3"
+                                                title="Create expense from this part"
+                                            >
+                                                <Receipt className="h-4 w-4 mr-1" />
+                                                Create Expense
                                             </Button>
                                         )}
                                         <Button
