@@ -132,7 +132,7 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
             <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
                 {invoices.map((invoice) => (
                     <Card
-                        key={invoice.invoice_number}
+                        key={invoice.id}
                         className={cn(
                             "bg-white dark:bg-[#131313] border-border dark:border-[#2a2a2a] p-4 transition-all hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:shadow-lg cursor-pointer"
                         )}
