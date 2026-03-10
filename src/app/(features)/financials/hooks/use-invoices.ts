@@ -79,17 +79,18 @@ export function useInvoice(invoiceId: string, options?: { includeArchived?: bool
                 query = query.or('archived.eq.false,archived.is.null')
             }
             
-            const { data, error } = await query.single()
+            const { data, error } = await query.limit(1)
 
             if (error) {
-                // PGRST116 means "no rows returned" - this is expected if invoice was archived
-                if (error.code === 'PGRST116') {
-                    return null
-                }
-                console.error('Error fetching invoice:', error)
-                throw error
+                const errMsg =
+                    (error as { message?: string }).message ||
+                    (error as { details?: string }).details ||
+                    (error as { code?: string }).code ||
+                    JSON.stringify(error)
+                console.error('Error fetching invoice:', errMsg, error)
+                throw new Error(`Failed to fetch invoice: ${errMsg}`)
             }
-            return data as InvoiceWithDetails
+            return (Array.isArray(data) ? data[0] : data) as InvoiceWithDetails | null
         },
         enabled: !!invoiceId
     })
