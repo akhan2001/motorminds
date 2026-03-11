@@ -8,6 +8,7 @@ import { Plus, Maximize2, Minimize2, Layers, Archive, Package, Building2, Undo2 
 import { cn } from '@/lib/utils'
 import { PageSettingsDialog } from '@/components/shared/page-settings'
 import { WorkOrderSettingsDialog } from './WorkOrderSettingsDialog'
+import { SearchBar } from '@/app/(features)/admin/components/shared/SearchBar'
 
 type CompletedFilter = 'all' | '90days'
 
@@ -21,6 +22,8 @@ interface WorkOrderHeaderProps {
     onNewWorkOrder?: () => void
     onTemplatesClick?: () => void
     onStatusTrackersClick?: () => void
+    searchTerm?: string
+    onSearchChange?: (value: string) => void
 }
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
@@ -32,7 +35,9 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     onToggleView,
     onNewWorkOrder,
     onTemplatesClick,
-    onStatusTrackersClick
+    onStatusTrackersClick,
+    searchTerm = '',
+    onSearchChange
 }) => {
     const router = useRouter()
 
@@ -73,14 +78,16 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
-                        {/* Search Bar */}
-                        {/* <div className="relative w-80">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Find customer and create work order..."
-                                className="pl-10 h-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-red-500"
-                            />
-                        </div> */}
+                        {onSearchChange && (
+                            <div className="w-80">
+                                <SearchBar
+                                    value={searchTerm}
+                                    onChange={onSearchChange}
+                                    placeholder="Search by work order #, customer, vehicle, title..."
+                                    className="h-10"
+                                />
+                            </div>
+                        )}
 
                         {/* Create Work Order Button */}
                         <Button

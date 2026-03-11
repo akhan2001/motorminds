@@ -12,11 +12,53 @@ import { useWorkOrderOperations } from '../hooks/use-work-order-operations'
 import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrderInvoiceStatus } from '../../financials/hooks/use-invoices'
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
+import type { WorkOrderWithDetails } from '../types/work-order'
 import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
 import { WorkOrderCompletionModal } from '../components/work-orders/complete/work-order-completion-modal'
 import { Card, CardContent } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
+
+/** Filter work orders by search term (case-insensitive) */
+function filterWorkOrdersBySearch(
+    workOrders: WorkOrderWithDetails[],
+    searchTerm: string
+): WorkOrderWithDetails[] {
+    if (!searchTerm.trim()) return workOrders
+    const q = searchTerm.toLowerCase().trim()
+    return workOrders.filter((wo) => {
+        const matches = (val: string | number | undefined | null) =>
+            val != null && String(val).toLowerCase().includes(q)
+        if (matches(wo.work_order_number) || matches(wo.title) || matches(wo.description))
+            return true
+        if (wo.customer && (matches(wo.customer.customer_name) || matches(wo.customer.customer_phone)))
+            return true
+        if (wo.vehicle) {
+            if (
+                matches(wo.vehicle.make) ||
+                matches(wo.vehicle.model) ||
+                matches(wo.vehicle.year) ||
+                matches(wo.vehicle.license_plate)
+            )
+                return true
+        }
+        if (wo.walk_in_vehicle_info) {
+            const w = wo.walk_in_vehicle_info
+            if (
+                matches(w.make) ||
+                matches(w.model) ||
+                matches(w.year) ||
+                matches(w.license_plate)
+            )
+                return true
+        }
+        if (wo.technician) {
+            const t = wo.technician
+            if (matches(t.first_name) || matches(t.last_name)) return true
+        }
+        return false
+    })
+}
 
 /**
  * WorkOrdersPageContent - Container Component
@@ -43,18 +85,22 @@ export function WorkOrdersPageContent() {
         setCompletedFilter(value)
     }, [])
 
+    // Search state for filtering work orders
+    const [searchTerm, setSearchTerm] = useState('')
+
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '', completedFilter)
 
-    // Transform work orders to kanban format
+    // Transform work orders to kanban format (with search filter applied)
     const kanbanData = useMemo(() => {
         if (!workOrders) return []
-        const columns = transformWorkOrdersToKanbanColumns(workOrders)
+        const filtered = filterWorkOrdersBySearch(workOrders, searchTerm)
+        const columns = transformWorkOrdersToKanbanColumns(filtered)
         if (canDelete) {
             columns.push({ id: 'archived', title: '', color: 'bg-gray-500', items: [] })
         }
         return columns
-    }, [workOrders, canDelete])
+    }, [workOrders, canDelete, searchTerm])
 
     // Calculate stats using custom hook
     const stats = useWorkOrderStats(kanbanData)
@@ -504,6 +550,8 @@ export function WorkOrdersPageContent() {
             shopId={shopId}
             completedFilter={completedFilter}
             onCompletedFilterChange={handleCompletedFilterChange}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
             onSettingsChange={refetch}
             isCompactView={pageState.isCompactView}
             isModalOpen={pageState.isModalOpen}

@@ -6,11 +6,10 @@ import { AlertCircle, Archive } from 'lucide-react'
 import { useAuth } from '../../../hooks/use-auth'
 import { useArchivedWorkOrders } from '../../../hooks/use-archived-work-orders'
 import { ArchivedWorkOrderCard } from './ArchivedWorkOrderCard'
-import { Input } from '@/components/ui/input'
+import { SearchBar } from '@/app/(features)/admin/components/shared/SearchBar'
 import { useState } from 'react'
 import { WorkOrderDetailSheet } from '../shared/work-order-detail-sheet'
 import { useWorkOrderWithDetails } from '../../../hooks/use-work-orders'
-import type { WorkOrderWithDetails } from '../../../types/work-order'
 
 export function ArchivedWorkOrdersList() {
     const { shopId } = useAuth()
@@ -38,16 +37,39 @@ export function ArchivedWorkOrdersList() {
     }
 
     // Client-side filtering since the hook returns all
-    const filteredWorkOrders = workOrders.filter(wo => {
-        if (!searchTerm) return true
-        const searchLower = searchTerm.toLowerCase()
-        return (
-            wo.title.toLowerCase().includes(searchLower) ||
-            wo.work_order_number.toLowerCase().includes(searchLower) ||
-            wo.customer?.customer_name.toLowerCase().includes(searchLower) ||
-            wo.vehicle?.make.toLowerCase().includes(searchLower) ||
-            wo.vehicle?.model.toLowerCase().includes(searchLower)
-        )
+    const filteredWorkOrders = workOrders.filter((wo) => {
+        if (!searchTerm.trim()) return true
+        const q = searchTerm.toLowerCase().trim()
+        const matches = (val: string | number | undefined | null) =>
+            val != null && String(val).toLowerCase().includes(q)
+        if (matches(wo.work_order_number) || matches(wo.title) || matches(wo.description))
+            return true
+        if (wo.customer && (matches(wo.customer.customer_name) || matches(wo.customer.customer_phone)))
+            return true
+        if (wo.vehicle) {
+            if (
+                matches(wo.vehicle.make) ||
+                matches(wo.vehicle.model) ||
+                matches(wo.vehicle.year) ||
+                matches(wo.vehicle.license_plate)
+            )
+                return true
+        }
+        if (wo.walk_in_vehicle_info) {
+            const w = wo.walk_in_vehicle_info
+            if (
+                matches(w.make) ||
+                matches(w.model) ||
+                matches(w.year) ||
+                matches(w.license_plate)
+            )
+                return true
+        }
+        if (wo.technician) {
+            const t = wo.technician
+            if (matches(t.first_name) || matches(t.last_name)) return true
+        }
+        return false
     })
 
     if (error) {
@@ -83,11 +105,11 @@ export function ArchivedWorkOrdersList() {
             <CardContent>
                 {/* Search */}
                 <div className="mb-6">
-                    <Input
-                        placeholder="Search archived work orders..."
+                    <SearchBar
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-background border-border"
+                        onChange={setSearchTerm}
+                        placeholder="Search by work order #, customer, vehicle, title..."
+                        className="max-w-md"
                     />
                 </div>
 
