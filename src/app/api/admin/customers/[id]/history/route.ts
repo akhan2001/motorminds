@@ -103,7 +103,7 @@ export async function GET(
         
         const { data: workOrders, error: workOrdersError } = await workOrdersQuery
             .order('created_at', { ascending: false })
-            .limit(20)
+            .limit(100)
 
         if (workOrdersError) {
             console.error('Error fetching work orders:', workOrdersError)
@@ -143,7 +143,7 @@ export async function GET(
         
         const { data: appointments, error: appointmentsError } = await appointmentsQuery
             .order('appointment_date', { ascending: false })
-            .limit(20)
+            .limit(100)
 
         if (appointmentsError) {
             console.error('Error fetching appointments:', appointmentsError)
@@ -180,7 +180,7 @@ export async function GET(
         
         const { data: invoices, error: invoicesError } = await invoicesQuery
             .order('issue_date', { ascending: false })
-            .limit(20)
+            .limit(100)
 
         if (invoicesError) {
             console.error('Error fetching invoices:', invoicesError)
