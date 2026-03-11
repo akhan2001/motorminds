@@ -58,6 +58,8 @@ interface WorkOrdersPageViewProps {
     completedFilter: CompletedFilter
     onCompletedFilterChange: (value: CompletedFilter) => void
     onSettingsChange?: () => void
+    searchTerm?: string
+    onSearchChange?: (value: string) => void
 
     // State
     isCompactView: boolean
@@ -106,6 +108,8 @@ export function WorkOrdersPageView({
     completedFilter,
     onCompletedFilterChange,
     onSettingsChange,
+    searchTerm = '',
+    onSearchChange,
     isCompactView,
     isModalOpen,
     isCreateModalOpen,
@@ -150,6 +154,8 @@ export function WorkOrdersPageView({
                         completedFilter={completedFilter}
                         onCompletedFilterChange={onCompletedFilterChange}
                         onSettingsChange={onSettingsChange}
+                        searchTerm={searchTerm}
+                        onSearchChange={onSearchChange}
                         isCompactView={isCompactView}
                         onToggleView={onToggleView}
                         onNewWorkOrder={onNewWorkOrder}
