@@ -161,6 +161,15 @@ export async function GET(
                 due_date,
                 paid_date,
                 created_at,
+                customer_type,
+                walk_in_vehicle_info,
+                vehicle:customer_vehicles(
+                    id,
+                    year,
+                    make,
+                    model,
+                    license_plate
+                ),
                 work_order:work_orders(
                     id,
                     work_order_number,

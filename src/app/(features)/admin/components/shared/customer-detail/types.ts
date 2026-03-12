@@ -75,7 +75,20 @@ export interface Invoice {
     due_date?: string
     paid_date?: string
     created_at: string
-    work_orders?: {
+    vehicle?: {
+        id: string
+        year?: number
+        make?: string
+        model?: string
+        license_plate?: string
+    }
+    walk_in_vehicle_info?: {
+        year?: number
+        make?: string
+        model?: string
+        license_plate?: string
+    }
+    work_order?: {
         id: string
         work_order_number: string
         title?: string
