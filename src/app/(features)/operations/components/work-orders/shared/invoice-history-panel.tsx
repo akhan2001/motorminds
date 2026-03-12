@@ -1,17 +1,25 @@
 'use client'
 
-import React, { useState } from 'react'
-import { FileText, Calendar, DollarSign, Building2, Archive, AlertCircle } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { FileText, Building2, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCustomerInvoices } from '../../../hooks/use-customer-invoices'
 import { format } from 'date-fns'
-import { Loader2 } from 'lucide-react'
 import { InvoiceDetailSheet } from '@/app/(features)/financials/components/invoices/InvoiceDetailSheet'
 import type { InvoiceWithDetails } from '@/app/(features)/financials/types/invoice'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils/currency'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+
+type VehicleFilter = 'all' | 'walk_in' | string
 
 interface InvoiceHistoryPanelProps {
     customerId: string | null | undefined
@@ -25,6 +33,39 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
     const { data: invoices, isLoading, error } = useCustomerInvoices(customerId, shopId, true) // Enable organization-wide invoice access
     const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithDetails | null>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
+    const [vehicleFilter, setVehicleFilter] = useState<VehicleFilter>('all')
+
+    const uniqueVehicles = useMemo(() => {
+        if (!invoices?.length) return []
+        const seen = new Set<string>()
+        const options: { value: VehicleFilter; label: string }[] = []
+        let hasWalkIn = false
+        for (const inv of invoices) {
+            if (inv.vehicle?.id && !seen.has(inv.vehicle.id)) {
+                seen.add(inv.vehicle.id)
+                const v = inv.vehicle
+                const label = `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim() +
+                    (v.license_plate ? ` (${v.license_plate})` : '')
+                options.push({ value: inv.vehicle.id, label: label || 'Unknown vehicle' })
+            }
+            if (inv.customer_type === 'walk_in' || inv.walk_in_vehicle_info) {
+                hasWalkIn = true
+            }
+        }
+        if (hasWalkIn) {
+            options.push({ value: 'walk_in', label: 'Walk-in' })
+        }
+        return options
+    }, [invoices])
+
+    const filteredInvoices = useMemo(() => {
+        if (!invoices) return []
+        if (vehicleFilter === 'all') return invoices
+        if (vehicleFilter === 'walk_in') {
+            return invoices.filter((inv) => inv.customer_type === 'walk_in' || !!inv.walk_in_vehicle_info)
+        }
+        return invoices.filter((inv) => inv.vehicle_id === vehicleFilter)
+    }, [invoices, vehicleFilter])
 
     const handleInvoiceClick = (invoice: InvoiceWithDetails) => {
         setSelectedInvoice(invoice)
@@ -118,19 +159,40 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
     return (
         <div className="p-4 space-y-3">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                    <h4 className="text-sm font-semibold text-foreground dark:text-white">Invoice History</h4>
+            <div className="flex flex-col gap-3 mb-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                        <h4 className="text-sm font-semibold text-foreground dark:text-white">Invoice History</h4>
+                    </div>
+                    <span className="text-xs text-muted-foreground dark:text-gray-400 bg-secondary dark:bg-[#2a2a2a] px-2 py-1 rounded">
+                        {filteredInvoices.length} {filteredInvoices.length === 1 ? 'invoice' : 'invoices'}
+                    </span>
                 </div>
-                <span className="text-xs text-muted-foreground dark:text-gray-400 bg-secondary dark:bg-[#2a2a2a] px-2 py-1 rounded">
-                    {invoices.length} {invoices.length === 1 ? 'invoice' : 'invoices'}
-                </span>
+                {uniqueVehicles.length > 0 && (
+                    <Select value={vehicleFilter} onValueChange={(v) => setVehicleFilter(v as VehicleFilter)}>
+                        <SelectTrigger className="h-9 text-xs">
+                            <SelectValue placeholder="All vehicles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All vehicles</SelectItem>
+                            {uniqueVehicles.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
             </div>
 
             {/* Invoice List */}
             <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
-                {invoices.map((invoice) => (
+                {filteredInvoices.length === 0 ? (
+                    <p className="text-sm text-muted-foreground dark:text-gray-400 text-center py-6">
+                        No invoices for selected vehicle
+                    </p>
+                ) : filteredInvoices.map((invoice) => (
                     <Card
                         key={invoice.id}
                         className={cn(

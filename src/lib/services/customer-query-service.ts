@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/utils/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { 
     type UserAccessContext, 
     type AccessScope,
@@ -130,6 +131,12 @@ export async function queryCustomersForUser(
         }
     }
 
+    // Vehicle license plate search: always run when search has 2+ chars
+    let vehicleMatchIds: string[] = []
+    if (!phone && search && search.trim().length >= 2) {
+        vehicleMatchIds = await getCustomerIdsByVehicleLicensePlate(supabase, search, context, shopFilter)
+    }
+
     // Apply search filters
     if (phone) {
         // Exact phone number search
@@ -138,7 +145,7 @@ export async function queryCustomersForUser(
         // Restrict to ids from phone RPC (digits match)
         query = query.in('id', phoneMatchIds)
     } else if (search && search.length >= 2) {
-        query = applySearchFilter(query, search)
+        query = applySearchFilter(query, search, vehicleMatchIds)
     }
 
     // Apply sorting
@@ -185,6 +192,63 @@ export async function queryCustomersForUser(
         totalPages,
         accessScope: context.accessScope,
         organizationId: context.organizationId
+    }
+}
+
+const VEHICLE_LICENSE_PLATE_MATCH_LIMIT = 500
+
+/**
+ * Get customer IDs whose vehicles have a matching license plate.
+ * Filters by shop scope. Returns up to 500 IDs.
+ */
+async function getCustomerIdsByVehicleLicensePlate(
+    supabase: SupabaseClient,
+    search: string,
+    context: UserAccessContext,
+    shopFilter?: string
+): Promise<string[]> {
+    try {
+        const trimmedSearch = search.trim()
+        if (trimmedSearch.length < 2) return []
+
+        const { data: vehicles, error: vehiclesError } = await supabase
+            .from('customer_vehicles')
+            .select('customer_id')
+            .ilike('license_plate', `%${trimmedSearch}%`)
+            .limit(1000)
+
+        if (vehiclesError || !vehicles?.length) return []
+
+        const customerIds = [...new Set(vehicles.map((v: { customer_id: string }) => v.customer_id))].slice(0, VEHICLE_LICENSE_PLATE_MATCH_LIMIT)
+        if (customerIds.length === 0) return []
+
+        // Filter by shop scope
+        let shopIds: string[] = []
+        if (context.accessScope === 'shop' && context.shopId) {
+            shopIds = [context.shopId]
+        } else if (context.accessScope === 'organization' && context.accessibleShopIds.length > 0) {
+            shopIds = context.accessibleShopIds
+        } else if (context.accessScope === 'platform' && shopFilter && context.accessibleShopIds.includes(shopFilter)) {
+            shopIds = [shopFilter]
+        }
+        // Platform without shop filter: no shop filter, return all
+        if (shopIds.length === 0 && context.accessScope !== 'platform') {
+            return []
+        }
+
+        if (shopIds.length === 0) return customerIds
+
+        const { data: customers, error: customersError } = await supabase
+            .from('customers')
+            .select('id')
+            .in('id', customerIds)
+            .in('shop_id', shopIds)
+
+        if (customersError) return []
+        return (customers || []).map((c: { id: string }) => c.id)
+    } catch (err) {
+        console.error('getCustomerIdsByVehicleLicensePlate error:', err)
+        return []
     }
 }
 
@@ -238,32 +302,40 @@ function applyAccessScopeFilter(
 /**
  * Apply search filter based on search term type.
  * Phone search (digits-only) is handled via RPC above; here we handle formatted phone and other types.
+ * When vehicleMatchIds is non-empty, includes id.in.(...) so customers found via vehicle license plate are included.
  */
-function applySearchFilter(query: any, search: string): any {
+function applySearchFilter(query: any, search: string, vehicleMatchIds: string[] = []): any {
     const trimmedSearch = search.trim()
-    
+    const escapedSearch = trimmedSearch.replace(/'/g, "''")
+
+    const orParts: string[] = []
+
+    if (vehicleMatchIds.length > 0) {
+        orParts.push(`id.in.(${vehicleMatchIds.join(',')})`)
+    }
+
     // Phone number pattern: match by digits so formatted DB values like "(365) 889-0136" match "3658890136"
     if (trimmedSearch.match(/^\+?[\d\s()-]+$/)) {
         const cleanPhone = trimmedSearch.replace(/\D/g, '')
-        // Match both formatted string (user typed "(365) 889-0136") and digits (handled via RPC or fallback)
-        return query.or(
-            `customer_phone.ilike.%${trimmedSearch}%,customer_phone.ilike.%${cleanPhone}%`
-        )
+        orParts.push(`customer_phone.ilike.%${escapedSearch}%`, `customer_phone.ilike.%${cleanPhone}%`)
+        return query.or(orParts.join(','))
     }
-    
+
     // Email pattern
     if (trimmedSearch.includes('@')) {
-        return query.ilike('customer_email', `%${trimmedSearch}%`)
+        orParts.push(`customer_email.ilike.%${escapedSearch}%`)
+        return query.or(orParts.join(','))
     }
-    
+
     // General search (name, email, phone, license plate, address)
-    return query.or(
-        `customer_name.ilike.%${trimmedSearch}%,` +
-        `customer_email.ilike.%${trimmedSearch}%,` +
-        `customer_phone.ilike.%${trimmedSearch}%,` +
-        `license_plate.ilike.%${trimmedSearch}%,` +
-        `customer_address.ilike.%${trimmedSearch}%`
+    orParts.push(
+        `customer_name.ilike.%${escapedSearch}%`,
+        `customer_email.ilike.%${escapedSearch}%`,
+        `customer_phone.ilike.%${escapedSearch}%`,
+        `license_plate.ilike.%${escapedSearch}%`,
+        `customer_address.ilike.%${escapedSearch}%`
     )
+    return query.or(orParts.join(','))
 }
 
 /**

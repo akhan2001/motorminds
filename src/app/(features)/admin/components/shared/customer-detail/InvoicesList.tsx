@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, FileText, Wrench, Eye } from 'lucide-react'
+import { Calendar, Clock, FileText, Wrench, Eye, Car } from 'lucide-react'
 import { formatDate, formatCurrency, getInvoiceStatusVariant } from './utils'
 import type { Invoice } from './types'
 import { InvoiceQuickView, WorkOrderQuickView } from '@/components/shared/quick-view'
@@ -60,19 +60,35 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ invoices }) => {
                                             </div>
                                         )}
                                     </div>
-                                    {invoice.work_orders && (
+                                    {invoice.work_order && (
                                         <div className="mt-2 flex items-center gap-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    setSelectedWorkOrder(invoice.work_orders!.id)
+                                                    setSelectedWorkOrder(invoice.work_order!.id)
                                                 }}
                                                 className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
                                             >
                                                 <Wrench className="h-3 w-3" />
-                                                WO #{invoice.work_orders.work_order_number}
-                                                {invoice.work_orders.title && ` - ${invoice.work_orders.title}`}
+                                                WO #{invoice.work_order.work_order_number}
+                                                {invoice.work_order.title && ` - ${invoice.work_order.title}`}
                                             </button>
+                                        </div>
+                                    )}
+                                    {(invoice.vehicle || invoice.walk_in_vehicle_info) && (
+                                        <div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400">
+                                            <Car className="h-3 w-3 flex-shrink-0" />
+                                            {invoice.vehicle ? (
+                                                <span>
+                                                    {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                                    {invoice.vehicle.license_plate && ` (${invoice.vehicle.license_plate})`}
+                                                </span>
+                                            ) : invoice.walk_in_vehicle_info ? (
+                                                <span>
+                                                    {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                                    {invoice.walk_in_vehicle_info.license_plate && ` (${invoice.walk_in_vehicle_info.license_plate})`}
+                                                </span>
+                                            ) : null}
                                         </div>
                                     )}
                                 </div>
@@ -98,13 +114,13 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ invoices }) => {
                                             <Eye className="h-3 w-3 mr-1" />
                                             View
                                         </Button>
-                                        {invoice.work_orders && (
+                                        {invoice.work_order && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    setSelectedWorkOrder(invoice.work_orders!.id)
+                                                    setSelectedWorkOrder(invoice.work_order!.id)
                                                 }}
                                                 className="h-7 px-2 text-xs"
                                             >
