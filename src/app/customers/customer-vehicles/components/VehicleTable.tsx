@@ -1,8 +1,7 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useCallback } from "react"
-import { supabase } from "@/lib/supabase"
-import debounce from "lodash.debounce"
+import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Table,
     TableBody,
@@ -10,418 +9,512 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Search, Edit, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { VehicleForm } from "./VehicleForm"
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Search, Filter, Building2, Loader2 } from 'lucide-react'
+import { useAccessContext } from '@/hooks/customers'
+import { vehicleKeys } from '@/data/vehicles/keys'
+import {
+    VehicleDetailSheet,
+    type VehicleWithContext,
+} from '@/components/shared/vehicle-detail-sheet'
 
-interface Vehicle {
-    id: string;
-    year: number;
-    make: string;
-    model: string;
-    vin: string;
-    license_plate: string;
-    engine_type: string;
-    color: string;
-    mileage: number;
-    customer_id: string;
-}
+function useDebouncedSearch(initialValue = '', delay = 300) {
+    const [searchTerm, setSearchTerm] = useState(initialValue)
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialValue)
 
-interface Filters {
-    year: string | null;
-    make: string | null;
-    model: string | null;
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm)
+        }, delay)
+        return () => clearTimeout(handler)
+    }, [searchTerm, delay])
+
+    return {
+        searchTerm: searchTerm ?? '',
+        debouncedSearchTerm: debouncedSearchTerm ?? '',
+        setSearchTerm,
+    }
 }
 
 interface VehicleTableProps {
-    shopId: string;
-    refreshIndex?: number;
+    shopId: string
+    user: any
+    refreshIndex?: number
 }
 
-export function VehicleTable({ shopId, refreshIndex = 0 }: VehicleTableProps) {
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isLoading, setIsLoading] = useState(true);
-    const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-    const [sortConfig, setSortConfig] = useState<{key: string; direction: 'asc' | 'desc'}>({ 
-        key: 'year', 
-        direction: 'desc' 
-    });
-    const [filters, setFilters] = useState<Filters>({
-        year: null,
-        make: null,
-        model: null,
-    });
-    const [pagination, setPagination] = useState({
-        page: 1,
-        pageSize: 10,
-        total: 0,
-    });
-    const [filterOptions, setFilterOptions] = useState({
-        years: [] as number[],
-        makes: [] as string[],
-        models: [] as string[],
-    });
+export function VehicleTable({
+    shopId,
+    refreshIndex = 0,
+}: VehicleTableProps) {
+    const queryClient = useQueryClient()
+    const [selectedVehicle, setSelectedVehicle] =
+        useState<VehicleWithContext | null>(null)
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
+    const ITEMS_PER_PAGE = 50
 
-    // Debounced search function
-    const debouncedFetchVehicles = useCallback(
-        debounce((searchTerm: string) => {
-            fetchVehicles(searchTerm);
-        }, 300),
-        [shopId, pagination.page]
-    );
+    const { searchTerm, debouncedSearchTerm, setSearchTerm } =
+        useDebouncedSearch('', 300)
 
-    // Update search and trigger debounced fetch
-    const handleSearch = (value: string) => {
-        setSearchQuery(value);
-        debouncedFetchVehicles(value);
-    };
+    const {
+        accessContext,
+        isLoading: contextLoading,
+        showShopFilter,
+        showShopColumn,
+        availableShops,
+        accessScope,
+    } = useAccessContext()
 
-    // Fetch vehicles with search term parameter
-    async function fetchVehicles(searchTerm: string = searchQuery) {
-        if (!shopId) {
-            setVehicles([]);
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            
-            // First get all customers belonging to the shop
-            const { data: customers, error: customerError } = await supabase
-                .from('customers')
-                .select('id')
-                .eq('shop_id', shopId);
-
-            if (customerError) throw customerError;
-
-            if (!customers?.length) {
-                setVehicles([]);
-                setIsLoading(false);
-                return;
+    const { data: vehiclesData, isLoading: vehiclesLoading } = useQuery({
+        queryKey: [
+            ...vehicleKeys.list({
+                search: debouncedSearchTerm,
+                shopFilter: selectedShopIds[0],
+                page: currentPage,
+            }),
+            refreshIndex,
+        ],
+        queryFn: async () => {
+            const params = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: ITEMS_PER_PAGE.toString(),
+            })
+            if (debouncedSearchTerm.trim()) {
+                params.set('search', debouncedSearchTerm.trim())
             }
+            if (selectedShopIds.length === 1) {
+                params.set('shop_id', selectedShopIds[0])
+            }
+            const res = await fetch(`/api/vehicles?${params}`)
+            if (!res.ok) throw new Error('Failed to fetch vehicles')
+            return res.json()
+        },
+        enabled: !!shopId && !contextLoading,
+        staleTime: 30000,
+        placeholderData: (prev) => prev,
+    })
 
-            const customerIds = customers.map(c => c.id);
+    const vehicles = useMemo(
+        () => vehiclesData?.vehicles || [],
+        [vehiclesData]
+    )
+    const totalCount = useMemo(() => vehiclesData?.total || 0, [vehiclesData])
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
-            // Get all vehicles for these customers
-            const { data: vehiclesData, error: vehiclesError } = await supabase
-                .from('customer_vehicles')
-                .select('*')
-                .in('customer_id', customerIds);
+    const { data: vehicleHistory, isLoading: historyLoading, error: historyError } =
+        useQuery({
+            queryKey: vehicleKeys.history(selectedVehicle?.id ?? ''),
+            queryFn: async () => {
+                if (!selectedVehicle) return null
+                const res = await fetch(
+                    `/api/admin/vehicles/${selectedVehicle.id}/history`
+                )
+                if (!res.ok) throw new Error('Failed to fetch vehicle history')
+                return res.json()
+            },
+            enabled: !!selectedVehicle,
+            staleTime: 60000,
+            retry: 1,
+        })
 
-            if (vehiclesError) throw vehiclesError;
+    const handleSearchChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setSearchTerm(e.target.value)
+            setCurrentPage(1)
+        },
+        [setSearchTerm]
+    )
 
-            setAllVehicles(vehiclesData || []);
-            applyFiltersAndSort(vehiclesData || [], searchTerm);
+    const handleShopFilter = useCallback((shopIds: string[]) => {
+        setSelectedShopIds(shopIds)
+        setCurrentPage(1)
+    }, [])
 
-        } catch (error) {
-            setVehicles([]);
-            setFilterOptions({
-                years: [],
-                makes: [],
-                models: [],
-            });
-        } finally {
-            setIsLoading(false);
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page)
+    }, [])
+
+    const handleRowClick = useCallback((vehicle: VehicleWithContext) => {
+        setSelectedVehicle(vehicle)
+        setIsSheetOpen(true)
+    }, [])
+
+    const handleSheetClose = useCallback(() => {
+        setIsSheetOpen(false)
+        setSelectedVehicle(null)
+    }, [])
+
+    const handleVehicleUpdated = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: vehicleKeys.lists() })
+        if (selectedVehicle) {
+            queryClient.invalidateQueries({
+                queryKey: vehicleKeys.history(selectedVehicle.id),
+            })
         }
+    }, [queryClient, selectedVehicle])
+
+    const getPageNumbers = () => {
+        const pages: number[] = []
+        const maxVisible = 5
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i)
+        } else {
+            const start = Math.max(1, currentPage - 2)
+            const end = Math.min(totalPages, start + maxVisible - 1)
+            for (let i = start; i <= end; i++) pages.push(i)
+        }
+        return pages
     }
 
-    // New function to handle filtering and sorting
-    const applyFiltersAndSort = useCallback((data: Vehicle[], searchTerm: string = searchQuery) => {
-        // Apply filters and search
-        const filteredVehicles = data.filter((vehicle: Vehicle) => {
-            if (!vehicle) return false;
+    const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1
+    const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalCount)
 
-            const matchesSearch = !searchTerm || [
-                vehicle.make,
-                vehicle.model,
-                vehicle.vin,
-                vehicle.license_plate,
-                vehicle.color,
-                vehicle.engine_type
-            ].some(field => 
-                field?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-            );
-
-            const matchesYear = !filters.year || vehicle.year?.toString() === filters.year;
-            const matchesMake = !filters.make || vehicle.make === filters.make;
-            const matchesModel = !filters.model || vehicle.model === filters.model;
-
-            return matchesSearch && matchesYear && matchesMake && matchesModel;
-        });
-
-        // Apply sorting
-        const sortedVehicles = [...filteredVehicles].sort((a, b) => {
-            const aValue = a[sortConfig.key as keyof Vehicle] || '';
-            const bValue = b[sortConfig.key as keyof Vehicle] || '';
-            const modifier = sortConfig.direction === 'asc' ? 1 : -1;
-
-            if (aValue < bValue) return -1 * modifier;
-            if (aValue > bValue) return 1 * modifier;
-            return 0;
-        });
-
-        // Apply pagination
-        const total = sortedVehicles.length;
-        const start = (pagination.page - 1) * pagination.pageSize;
-        const end = start + pagination.pageSize;
-        const paginatedVehicles = sortedVehicles.slice(start, end);
-
-        setVehicles(paginatedVehicles);
-        setPagination(prev => ({ ...prev, total }));
-
-        // Update filter options from all vehicles (not just filtered)
-        if (data.length > 0) {
-            setFilterOptions({
-                years: [...new Set(data.map(v => v.year))].filter(Boolean).sort((a, b) => b - a),
-                makes: [...new Set(data.map(v => v.make))].filter(Boolean).sort(),
-                models: [...new Set(data.map(v => v.model))].filter(Boolean).sort(),
-            });
-        }
-    }, [filters, sortConfig, pagination.pageSize, pagination.page, searchQuery]);
-
-    // Effect for initial fetch
-    useEffect(() => {
-        if (shopId) {
-            fetchVehicles();
-        }
-        return () => {
-            debouncedFetchVehicles.cancel();
-        };
-    }, [shopId, refreshIndex]);
-
-    // Effect for filter/sort changes
-    useEffect(() => {
-        if (allVehicles.length > 0) {
-            applyFiltersAndSort(allVehicles);
-        }
-    }, [filters, sortConfig, pagination.page]);
-
-    // Handle sort
-    const handleSort = (key: keyof Vehicle) => {
-        setSortConfig(current => ({
-            key,
-            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
-        }));
-    };
-
-    // Render loading state
-    if (isLoading) {
+    if (contextLoading || (vehiclesLoading && !vehiclesData)) {
         return (
-            <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                            placeholder="Search vehicles..."
+                            className="pl-10"
+                            disabled
+                            value=""
+                            readOnly
+                        />
+                    </div>
+                </div>
+                <div className="rounded-md border border-border overflow-hidden bg-card">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow className="hover:bg-muted/50 border-b border-border">
+                                <TableHead className="text-foreground font-medium">
+                                    Year
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Make
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Model
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    VIN
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    License Plate
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Owner
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {[...Array(8)].map((_, i) => (
+                                <TableRow
+                                    key={i}
+                                    className="border-b border-border"
+                                >
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-12" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-20" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-24" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-28" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-20" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-32" />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
-        );
+        )
     }
 
     return (
         <div className="space-y-4">
-            {/* Filters Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-2 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                        placeholder="Search vehicles..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="pl-10 bg-[#131313] border border-[#222] text-white"
+                        placeholder={
+                            showShopFilter
+                                ? 'Search by year, make, model, VIN, or license plate (organization-wide)...'
+                                : 'Search by year, make, model, VIN, or license plate...'
+                        }
+                        value={searchTerm || ''}
+                        onChange={handleSearchChange}
+                        className="pl-10 bg-background border-border text-foreground"
                     />
                 </div>
-                
-                {filterOptions.years.length > 0 && (
-                    <Select
-                        value={filters.year || "all"}
-                        onValueChange={(value) => setFilters(prev => ({ 
-                            ...prev, 
-                            year: value === "all" ? null : value 
-                        }))}
-                    >
-                        <SelectTrigger className="bg-[#131313] border-[#222]">
-                            <SelectValue placeholder="Filter by Year" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#1a1a1a] border-[#333]">
-                            <SelectItem value="all" className="text-white">All Years</SelectItem>
-                            {filterOptions.years.map(year => (
-                                <SelectItem key={year} value={year.toString()} className="text-white">
-                                    {year}
-                                </SelectItem>
+                {showShopFilter && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2">
+                                <Filter className="h-4 w-4" />
+                                {selectedShopIds.length === 0
+                                    ? 'All Shops'
+                                    : selectedShopIds.length === 1
+                                    ? availableShops.find(
+                                          (s) => s.id === selectedShopIds[0]
+                                      )?.shop_name || '1 Shop'
+                                    : `${selectedShopIds.length} Shops`}
+                                {selectedShopIds.length > 0 && (
+                                    <Badge variant="secondary" className="ml-1">
+                                        {selectedShopIds.length}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuLabel className="flex items-center justify-between">
+                                Filter by Shop
+                                {selectedShopIds.length > 0 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleShopFilter([])}
+                                        className="h-auto p-1 text-xs"
+                                    >
+                                        Clear
+                                    </Button>
+                                )}
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {availableShops.map((shop) => (
+                                <DropdownMenuCheckboxItem
+                                    key={shop.id}
+                                    checked={selectedShopIds.includes(shop.id)}
+                                    onCheckedChange={(checked) => {
+                                        const newSelected = checked
+                                            ? [...selectedShopIds, shop.id]
+                                            : selectedShopIds.filter(
+                                                  (id) => id !== shop.id
+                                              )
+                                        handleShopFilter(newSelected)
+                                    }}
+                                >
+                                    {shop.shop_name}
+                                </DropdownMenuCheckboxItem>
                             ))}
-                        </SelectContent>
-                    </Select>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 )}
-
-                <Select
-                    value={filters.make || "all"}
-                    onValueChange={(value) => setFilters(prev => ({ 
-                        ...prev, 
-                        make: value === "all" ? null : value,
-                        // Reset model when make changes
-                        model: null 
-                    }))}
-                >
-                    <SelectTrigger className="bg-[#131313] border-[#222] text-white">
-                        <SelectValue placeholder="Filter by Make" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1a1a1a] border-[#333]">
-                        <SelectItem value="all" className="text-white">All Makes</SelectItem>
-                        {filterOptions.makes.map(make => (
-                            <SelectItem key={make} value={make} className="text-white">
-                                {make}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select
-                    value={filters.model || "all"}
-                    onValueChange={(value) => setFilters(prev => ({ 
-                        ...prev, 
-                        model: value === "all" ? null : value 
-                    }))}
-                    disabled={!filters.make}
-                >
-                    <SelectTrigger className="bg-[#131313] border-[#222] text-white">
-                        <SelectValue placeholder="Filter by Model" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1a1a1a] border-[#333]">
-                        <SelectItem value="all" className="text-white">All Models</SelectItem>
-                        {filterOptions.models
-                            .filter(model => !filters.make || vehicles.some(v => v.make === filters.make && v.model === model))
-                            .map(model => (
-                                <SelectItem key={model} value={model} className="text-white">
-                                    {model}
-                                </SelectItem>
-                            ))}
-                    </SelectContent>
-                </Select>
             </div>
 
-            {/* Table Section */}
-            <div className="rounded-md border border-[#222]">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-[#222] hover:bg-[#1a1a1a]">
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('year')}
-                            >
-                                Year {sortConfig.key === 'year' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('make')}
-                            >
-                                Make {sortConfig.key === 'make' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('model')}
-                            >
-                                Model {sortConfig.key === 'model' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('vin')}
-                            >
-                                VIN {sortConfig.key === 'vin' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('license_plate')}
-                            >
-                                License Plate {sortConfig.key === 'license_plate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('color')}
-                            >
-                                Color {sortConfig.key === 'color' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('mileage')}
-                            >
-                                Mileage {sortConfig.key === 'mileage' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                            <TableHead 
-                                className="text-gray-400 cursor-pointer"
-                                onClick={() => handleSort('engine_type')}
-                            >
-                                Engine {sortConfig.key === 'engine_type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {vehicles.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8">
-                                    <p className="text-gray-400">
-                                        {searchQuery || Object.values(filters).some(Boolean)
-                                            ? "No vehicles found matching your filters"
-                                            : "No vehicles found"}
-                                    </p>
-                                </TableCell>
+            {/* Table */}
+            <div className="rounded-md border border-border overflow-hidden bg-card">
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow className="hover:bg-muted/50 border-b border-border">
+                                <TableHead className="text-foreground font-medium">
+                                    Year
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Make
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Model
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    VIN
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    License Plate
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Color
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Mileage
+                                </TableHead>
+                                <TableHead className="text-foreground font-medium">
+                                    Owner
+                                </TableHead>
+                                {showShopColumn && (
+                                    <TableHead className="text-foreground font-medium">
+                                        Shop
+                                    </TableHead>
+                                )}
                             </TableRow>
-                        ) : (
-                            vehicles.map((vehicle) => (
-                                <TableRow key={vehicle.id} className="border-[#222] hover:bg-[#1a1a1a]">
-                                    <TableCell>{vehicle.year}</TableCell>
-                                    <TableCell>{vehicle.make}</TableCell>
-                                    <TableCell>{vehicle.model}</TableCell>
-                                    <TableCell>{vehicle.vin}</TableCell>
-                                    <TableCell>{vehicle.license_plate}</TableCell>
-                                    <TableCell>{vehicle.color}</TableCell>
-                                    <TableCell>{vehicle.mileage}</TableCell>
-                                    <TableCell>{vehicle.engine_type}</TableCell>
+                        </TableHeader>
+                        <TableBody>
+                            {vehicles.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={showShopColumn ? 9 : 8}
+                                        className="text-center py-8"
+                                    >
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Search className="h-8 w-8 text-muted-foreground" />
+                                            <p className="text-muted-foreground">
+                                                {searchTerm
+                                                    ? 'No vehicles found matching your search.'
+                                                    : 'No vehicles found.'}
+                                            </p>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                vehicles.map((vehicle: VehicleWithContext) => (
+                                    <TableRow
+                                        key={vehicle.id}
+                                        className="hover:bg-muted/50 border-b border-border cursor-pointer"
+                                        onClick={() => handleRowClick(vehicle)}
+                                    >
+                                        <TableCell className="text-foreground">
+                                            {vehicle.year ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-foreground">
+                                            {vehicle.make ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-foreground">
+                                            {vehicle.model ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {vehicle.vin ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-foreground">
+                                            {vehicle.license_plate ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {vehicle.color ?? '-'}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {vehicle.mileage != null
+                                                ? vehicle.mileage.toLocaleString()
+                                                : '-'}
+                                        </TableCell>
+                                        <TableCell className="text-foreground font-medium">
+                                            <div className="flex items-center gap-2">
+                                                {vehicle.customer_name ?? '-'}
+                                                {showShopColumn &&
+                                                    !vehicle.isFromCurrentShop &&
+                                                    vehicle.shopName && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                                        >
+                                                            <Building2 className="h-3 w-3 mr-1" />
+                                                            {vehicle.shopName}
+                                                        </Badge>
+                                                    )}
+                                            </div>
+                                        </TableCell>
+                                        {showShopColumn && (
+                                            <TableCell className="text-muted-foreground">
+                                                {vehicle.shopName ?? '-'}
+                                            </TableCell>
+                                        )}
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between py-4 px-4 bg-muted/30 border-t border-border">
+                        <div className="text-sm text-muted-foreground hidden sm:block">
+                            Showing {startItem} to {endItem} of {totalCount}{' '}
+                            vehicles
+                        </div>
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() =>
+                                            handlePageChange(
+                                                Math.max(1, currentPage - 1)
+                                            )
+                                        }
+                                        className={
+                                            currentPage === 1
+                                                ? 'pointer-events-none opacity-50'
+                                                : 'cursor-pointer'
+                                        }
+                                    />
+                                </PaginationItem>
+                                {getPageNumbers().map((page) => (
+                                    <PaginationItem key={page}>
+                                        <PaginationLink
+                                            onClick={() =>
+                                                handlePageChange(page)
+                                            }
+                                            isActive={currentPage === page}
+                                            className="cursor-pointer"
+                                        >
+                                            {page}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() =>
+                                            handlePageChange(
+                                                Math.min(
+                                                    totalPages,
+                                                    currentPage + 1
+                                                )
+                                            )
+                                        }
+                                        className={
+                                            currentPage === totalPages
+                                                ? 'pointer-events-none opacity-50'
+                                                : 'cursor-pointer'
+                                        }
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </div>
 
-            {/* Pagination Section */}
-            {!isLoading && vehicles.length > 0 && (
-                <div className="flex items-center justify-between py-4">
-                    <p className="text-sm text-gray-400">
-                        Showing {pagination.page * pagination.pageSize - pagination.pageSize + 1} to {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} vehicles
-                    </p>
-                    <div className="flex items-center space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                            disabled={pagination.page === 1 || isLoading}
-                            className="border-[#333] hover:bg-[#222] hover:text-white"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm text-gray-400">
-                            Page {pagination.page} of {Math.ceil(pagination.total / pagination.pageSize)}
-                        </span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                            disabled={pagination.page === Math.ceil(pagination.total / pagination.pageSize) || isLoading}
-                            className="border-[#333] hover:bg-[#222] hover:text-white"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
+            {selectedVehicle && (
+                <VehicleDetailSheet
+                    vehicle={selectedVehicle}
+                    vehicleHistory={vehicleHistory}
+                    isOpen={isSheetOpen}
+                    onClose={handleSheetClose}
+                    loading={historyLoading}
+                    error={historyError?.message ?? null}
+                    onVehicleUpdated={handleVehicleUpdated}
+                />
             )}
         </div>
-    );
+    )
 }

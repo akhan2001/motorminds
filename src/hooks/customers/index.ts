@@ -6,6 +6,7 @@
 
 export { 
     useCustomerAccessContext,
+    useAccessContext,
     type ClientAccessContext,
     type OrganizationCheckResponse,
 } from './useCustomerAccessContext'

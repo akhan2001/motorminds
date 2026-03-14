@@ -12,6 +12,7 @@ import {
     type AccessScope,
     canAccessScope 
 } from '@/lib/auth/access-context'
+import { resolveShopFilter, applyShopFilterToQuery } from './query-utils'
 
 export interface CustomerQueryOptions {
     /** Search term for name, email, phone, etc. */
@@ -114,7 +115,8 @@ export async function queryCustomersForUser(
         `, { count: 'exact' })
 
     // Apply scope-based filtering
-    query = applyAccessScopeFilter(query, context, shopFilter)
+    const { shopIds } = resolveShopFilter(context, shopFilter)
+    query = applyShopFilterToQuery(query, shopIds, 'shop_id') as typeof query
 
     // Phone search by digits: use RPC so "(365) 889-0136" matches "3658890136"
     let phoneMatchIds: string[] | null = null
@@ -222,21 +224,8 @@ async function getCustomerIdsByVehicleLicensePlate(
         const customerIds = [...new Set(vehicles.map((v: { customer_id: string }) => v.customer_id))].slice(0, VEHICLE_LICENSE_PLATE_MATCH_LIMIT)
         if (customerIds.length === 0) return []
 
-        // Filter by shop scope
-        let shopIds: string[] = []
-        if (context.accessScope === 'shop' && context.shopId) {
-            shopIds = [context.shopId]
-        } else if (context.accessScope === 'organization' && context.accessibleShopIds.length > 0) {
-            shopIds = context.accessibleShopIds
-        } else if (context.accessScope === 'platform' && shopFilter && context.accessibleShopIds.includes(shopFilter)) {
-            shopIds = [shopFilter]
-        }
-        // Platform without shop filter: no shop filter, return all
-        if (shopIds.length === 0 && context.accessScope !== 'platform') {
-            return []
-        }
-
-        if (shopIds.length === 0) return customerIds
+        const { shopIds } = resolveShopFilter(context, shopFilter)
+        if (!shopIds || shopIds.length === 0) return customerIds
 
         const { data: customers, error: customersError } = await supabase
             .from('customers')
@@ -249,53 +238,6 @@ async function getCustomerIdsByVehicleLicensePlate(
     } catch (err) {
         console.error('getCustomerIdsByVehicleLicensePlate error:', err)
         return []
-    }
-}
-
-/**
- * Apply access scope filter to query
- */
-function applyAccessScopeFilter(
-    query: any,
-    context: UserAccessContext,
-    shopFilter?: string
-): any {
-    // Validate shopFilter is within user's accessible shops
-    if (shopFilter && !context.accessibleShopIds.includes(shopFilter)) {
-        // Invalid shop filter - ignore it and use default scope
-        shopFilter = undefined
-    }
-
-    switch (context.accessScope) {
-        case 'platform':
-            // Platform admin can see all customers
-            // Apply shop filter if provided
-            if (shopFilter) {
-                return query.eq('shop_id', shopFilter)
-            }
-            return query
-
-        case 'organization':
-            // Organization user can see customers from all org shops
-            if (shopFilter) {
-                // Filter to specific shop within org
-                return query.eq('shop_id', shopFilter)
-            }
-            // Filter to all shops in organization
-            // Use OR logic to include customers from current shop even without organization_id
-            if (context.organizationId) {
-                return query.or(`organization_id.eq.${context.organizationId},shop_id.eq.${context.shopId}`)
-            }
-            // Fallback to accessible shop IDs
-            if (context.accessibleShopIds.length > 0) {
-                return query.in('shop_id', context.accessibleShopIds)
-            }
-            return query.eq('shop_id', context.shopId)
-
-        case 'shop':
-        default:
-            // Shop user can only see their shop's customers
-            return query.eq('shop_id', context.shopId)
     }
 }
 

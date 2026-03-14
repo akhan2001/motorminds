@@ -121,3 +121,6 @@ function getClientPermissions(role: string): { canEdit: boolean; canDelete: bool
 }
 
 export default useCustomerAccessContext
+
+/** Alias for useCustomerAccessContext - use for vehicle, shop, or org-scoped pages */
+export const useAccessContext = useCustomerAccessContext
