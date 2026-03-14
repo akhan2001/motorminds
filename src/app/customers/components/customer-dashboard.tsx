@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { CustomerTable } from "./customer-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { CustomerForm } from "./customer-form";
+import { CustomersTableLoading } from "./customers-table-loading";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
@@ -31,13 +33,15 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                     </div>
                 </div>
                 
-                {/* Single unified CustomerTable - adapts based on user's access scope */}
-                <CustomerTable
-                    shopId={shopId}
-                    user={user}
-                    key={refreshKey}
-                    refreshIndex={refreshKey}
-                />
+                {/* Suspense required for useSearchParams in CustomerTable */}
+                <Suspense fallback={<CustomersTableLoading />}>
+                    <CustomerTable
+                        shopId={shopId}
+                        user={user}
+                        key={refreshKey}
+                        refreshIndex={refreshKey}
+                    />
+                </Suspense>
 
                 {/* Add Customer Form */}
                 {isAdding && (

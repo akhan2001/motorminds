@@ -52,7 +52,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
 
     // Navigation
     const handleCustomerClick = (customerId: string) => {
-        router.push(`/customers/${customerId}`)
+        router.push(`/customers?customer=${customerId}`)
     }
 
     const handleConversationSelect = (phone: string) => {

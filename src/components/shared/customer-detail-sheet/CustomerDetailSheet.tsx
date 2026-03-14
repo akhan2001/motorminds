@@ -248,7 +248,7 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
 
     const handleViewProfile = useCallback(() => {
         if (customer?.id) {
-            router.push(`/customers/${customer.id}`)
+            router.push(`/customers?customer=${customer.id}`)
             onClose()
         }
     }, [customer?.id, router, onClose])

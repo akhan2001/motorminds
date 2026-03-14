@@ -59,7 +59,7 @@ export const VehicleDetailSheet = memo<VehicleDetailSheetProps>(({
 
     const handleViewCustomer = () => {
         if (vehicle?.customer_id) {
-            router.push(`/customers/${vehicle.customer_id}`)
+            router.push(`/customers?customer=${vehicle.customer_id}`)
             onClose()
         }
     }
