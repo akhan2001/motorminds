@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { CustomerDetailSheet } from "@/components/shared/customer-detail-sheet";
+import { CustomerDetailSheet, type Customer as SheetCustomer } from "@/components/shared/customer-detail-sheet";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Search, Building2, Filter } from "lucide-react";
@@ -79,8 +80,12 @@ interface CustomerTableProps {
  */
 export function CustomerTable({ shopId, user, refreshIndex }: CustomerTableProps) {
 	const queryClient = useQueryClient();
-	const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-	const [isSheetOpen, setIsSheetOpen] = useState(false);
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const customerIdFromUrl = searchParams.get('customer');
+	const isSheetOpen = !!customerIdFromUrl;
+
+	const [optimisticCustomer, setOptimisticCustomer] = useState<Customer | null>(null);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [selectedShopIds, setSelectedShopIds] = useState<string[]>([]);
 	const ITEMS_PER_PAGE = 50;
@@ -153,18 +158,72 @@ export function CustomerTable({ shopId, user, refreshIndex }: CustomerTableProps
 	}, []);
 
 	const handleRowClick = useCallback((customer: Customer) => {
-		setSelectedCustomer(customer);
-		setIsSheetOpen(true);
-	}, []);
+		setOptimisticCustomer(customer);
+		const params = new URLSearchParams(searchParams);
+		params.set('customer', customer.id);
+		router.push(`/customers?${params}`, { scroll: false });
+	}, [router, searchParams]);
 
 	const handleSheetClose = useCallback(() => {
-		setIsSheetOpen(false);
-		setSelectedCustomer(null);
-	}, []);
+		setOptimisticCustomer(null);
+		router.back();
+	}, [router]);
+
+	// Fetch customer by ID when URL has customer param (single source of truth)
+	const { data: customerDetail, isLoading: detailLoading, error: detailError, isError: detailIsError } = useQuery({
+		queryKey: customerKeys.detail(customerIdFromUrl ?? ''),
+		queryFn: async () => {
+			if (!customerIdFromUrl) return null;
+			const res = await fetch(`/api/customers/${customerIdFromUrl}`);
+			if (!res.ok) {
+				if (res.status === 404 || res.status === 403) {
+					throw new Error('NOT_FOUND');
+				}
+				throw new Error('Failed to fetch customer');
+			}
+			return res.json();
+		},
+		enabled: !!customerIdFromUrl,
+		staleTime: 60000,
+		retry: false,
+	});
+
+	// Handle 404/403: clear param and toast
+	useEffect(() => {
+		if (detailIsError && customerIdFromUrl) {
+			toast.error('Customer not found');
+			const params = new URLSearchParams(searchParams);
+			params.delete('customer');
+			router.replace(params.toString() ? `/customers?${params}` : '/customers');
+		}
+	}, [detailIsError, customerIdFromUrl, searchParams, router]);
+
+	const selectedCustomer: Customer | null = useMemo(() => {
+		if (!customerIdFromUrl) return null;
+		if (customerDetail) return customerDetail as Customer;
+		if (optimisticCustomer?.id === customerIdFromUrl) return optimisticCustomer;
+		return null;
+	}, [customerIdFromUrl, customerDetail, optimisticCustomer]);
+
+	// Normalize for CustomerDetailSheet (null -> undefined for optional fields)
+	const sheetCustomer: SheetCustomer | null = useMemo(() => {
+		if (!isSheetOpen) return null;
+		if (selectedCustomer) {
+			return {
+				...selectedCustomer,
+				customer_email: selectedCustomer.customer_email ?? undefined,
+				customer_phone: selectedCustomer.customer_phone ?? undefined,
+				customer_address: selectedCustomer.customer_address ?? undefined,
+				license_plate: selectedCustomer.license_plate ?? undefined,
+			};
+		}
+		return { id: customerIdFromUrl!, customer_name: 'Loading...', shop_id: '', created_at: '' };
+	}, [isSheetOpen, selectedCustomer, customerIdFromUrl]);
 
 	const handleCustomerUpdated = useCallback(() => {
 		queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
 		if (selectedCustomer) {
+			queryClient.invalidateQueries({ queryKey: customerKeys.detail(selectedCustomer.id) });
 			queryClient.invalidateQueries({ queryKey: customerKeys.history(selectedCustomer.id) });
 			queryClient.invalidateQueries({ queryKey: customerKeys.vehiclesList(selectedCustomer.id) });
 		}
@@ -412,7 +471,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: CustomerTableProps
 											{customer.customer_email || "-"}
 										</TableCell>
 										<TableCell className="text-foreground hidden md:table-cell">
-											{formatPhoneNumber(customer.customer_phone)}
+											{formatPhoneNumber(customer.customer_phone ?? '')}
 										</TableCell>
 										<TableCell className="text-foreground hidden lg:table-cell">
 											{customer.license_plate || "-"}
@@ -474,15 +533,15 @@ export function CustomerTable({ shopId, user, refreshIndex }: CustomerTableProps
 				)}
 			</div>
 
-			{/* Customer Detail Sheet */}
-			{selectedCustomer && (
+			{/* Customer Detail Sheet - show when URL has customer param */}
+			{isSheetOpen && (
 				<CustomerDetailSheet
-					customer={selectedCustomer}
+					customer={sheetCustomer}
 					customerHistory={customerHistory}
 					vehicles={customerVehicles || []}
 					isOpen={isSheetOpen}
 					onClose={handleSheetClose}
-					loading={historyLoading}
+					loading={detailLoading || historyLoading}
 					vehiclesLoading={vehiclesLoading}
 					error={historyError?.message || null}
 					onCustomerUpdated={handleCustomerUpdated}
