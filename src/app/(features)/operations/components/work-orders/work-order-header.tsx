@@ -9,8 +9,7 @@ import { cn } from '@/lib/utils'
 import { PageSettingsDialog } from '@/components/shared/page-settings'
 import { WorkOrderSettingsDialog } from './WorkOrderSettingsDialog'
 import { SearchBar } from '@/app/(features)/admin/components/shared/SearchBar'
-
-type CompletedFilter = 'all' | '90days'
+import type { CompletedFilter } from '../../../types/work-order'
 
 interface WorkOrderHeaderProps {
     className?: string

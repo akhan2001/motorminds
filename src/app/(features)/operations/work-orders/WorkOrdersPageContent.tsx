@@ -12,7 +12,7 @@ import { useWorkOrderOperations } from '../hooks/use-work-order-operations'
 import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrderInvoiceStatus } from '../../financials/hooks/use-invoices'
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
-import type { WorkOrderWithDetails } from '../types/work-order'
+import type { WorkOrderWithDetails, CompletedFilter } from '../types/work-order'
 import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
 import { WorkOrderCompletionModal } from '../components/work-orders/complete/work-order-completion-modal'
 import { Card, CardContent } from '@/components/ui/card'
@@ -74,22 +74,28 @@ export function WorkOrdersPageContent() {
     const { data: canDelete = false } = useCanDeleteWorkOrders(shopId ?? undefined)
 
     // Work order settings - persisted in localStorage
-    const [completedFilter, setCompletedFilter] = useState<'all' | '90days'>(() => {
-        if (typeof window === 'undefined') return 'all'
-        return (localStorage.getItem('work-orders-completed-filter') as 'all' | '90days') || 'all'
+    const [completedFilter, setCompletedFilter] = useState<CompletedFilter>(() => {
+        if (typeof window === 'undefined') return '30days'
+        return (localStorage.getItem('work-orders-completed-filter') as CompletedFilter) || '30days'
     })
+    const [showAllCompleted, setShowAllCompleted] = useState(false)
     useEffect(() => {
         localStorage.setItem('work-orders-completed-filter', completedFilter)
     }, [completedFilter])
-    const handleCompletedFilterChange = useCallback((value: 'all' | '90days') => {
+    const handleCompletedFilterChange = useCallback((value: CompletedFilter) => {
         setCompletedFilter(value)
+        setShowAllCompleted(false) // Reset when changing filter
     }, [])
 
     // Search state for filtering work orders
     const [searchTerm, setSearchTerm] = useState('')
 
     // Data fetching - only fetch if we have a valid shopId
-    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '', completedFilter)
+    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(
+        shopId || '',
+        completedFilter,
+        { showAllCompleted }
+    )
 
     // Transform work orders to kanban format (with search filter applied)
     const kanbanData = useMemo(() => {
@@ -550,6 +556,8 @@ export function WorkOrdersPageContent() {
             shopId={shopId}
             completedFilter={completedFilter}
             onCompletedFilterChange={handleCompletedFilterChange}
+            showAllCompleted={showAllCompleted}
+            onShowAllCompleted={() => setShowAllCompleted(true)}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onSettingsChange={refetch}

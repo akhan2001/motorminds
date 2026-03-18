@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { WorkOrderKanban, WorkOrderHeader } from '../components/work-orders'
 import { DragDropProvider } from '../components/work-orders/DragDrop'
-import type { WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from '../types/work-order'
+import type { WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails, CompletedFilter } from '../types/work-order'
 
 // Lazy load modals to reduce initial bundle size (Supabase pattern)
 const WorkOrderCreateModal = dynamic(
@@ -44,8 +44,6 @@ const ModalSkeleton = () => (
     </div>
 )
 
-type CompletedFilter = 'all' | '90days'
-
 interface WorkOrdersPageViewProps {
     // Data
     kanbanData: WorkOrderKanbanColumn[]
@@ -58,6 +56,8 @@ interface WorkOrdersPageViewProps {
     completedFilter: CompletedFilter
     onCompletedFilterChange: (value: CompletedFilter) => void
     onSettingsChange?: () => void
+    showAllCompleted?: boolean
+    onShowAllCompleted?: () => void
     searchTerm?: string
     onSearchChange?: (value: string) => void
 
@@ -108,6 +108,8 @@ export function WorkOrdersPageView({
     completedFilter,
     onCompletedFilterChange,
     onSettingsChange,
+    showAllCompleted = false,
+    onShowAllCompleted,
     searchTerm = '',
     onSearchChange,
     isCompactView,
@@ -167,6 +169,9 @@ export function WorkOrdersPageView({
                             columns={kanbanData}
                             onCardClick={onCardClick}
                             isCompactView={isCompactView}
+                            completedFilter={completedFilter}
+                            showAllCompleted={showAllCompleted}
+                            onShowAllCompleted={onShowAllCompleted}
                         />
                     </div>
                 </div>
