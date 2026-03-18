@@ -3,7 +3,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workOrderService } from '../lib/work-order-service'
-import type { WorkOrder, WorkOrderStatus } from '../types/work-order'
+import type { WorkOrder, WorkOrderStatus, CompletedFilter } from '../types/work-order'
 import { toast } from 'sonner'
 
 // Query keys
@@ -44,12 +44,19 @@ export function useWorkOrdersByStatus(shopId: string, status: WorkOrderStatus) {
     })
 }
 
-export function useWorkOrdersWithDetails(shopId: string, completedFilter: 'all' | '90days' = 'all') {
+export function useWorkOrdersWithDetails(
+    shopId: string,
+    completedFilter: CompletedFilter = '30days',
+    options?: { showAllCompleted?: boolean }
+) {
+    const limitCompleted =
+        completedFilter === 'all' && !options?.showAllCompleted ? 50 : undefined
     return useQuery({
-        queryKey: [...workOrderKeys.list(shopId), 'with-details', completedFilter],
-        queryFn: () => workOrderService.getWorkOrdersWithDetails(shopId, completedFilter),
+        queryKey: [...workOrderKeys.list(shopId), 'with-details', completedFilter, options?.showAllCompleted],
+        queryFn: () =>
+            workOrderService.getWorkOrdersWithDetails(shopId, completedFilter, { limitCompleted }),
         staleTime: 5 * 60 * 1000,
-        enabled: !!shopId && shopId !== '', // Only enable if shopId is valid (not empty)
+        enabled: !!shopId && shopId !== '',
     })
 }
 

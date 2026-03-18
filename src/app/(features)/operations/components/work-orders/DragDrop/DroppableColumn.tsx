@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Clock } from 'lucide-react'
+import { Clock, ChevronDown } from 'lucide-react'
 import { formatNumber } from '@/lib/utils/currency'
 import { WorkOrderKanbanColumn, WorkOrderKanbanItem } from '../../../types/work-order'
 import { DraggableWorkOrderCard } from './DraggableWorkOrderCard'
@@ -15,13 +16,17 @@ interface DroppableColumnProps {
   column: WorkOrderKanbanColumn
   onCardClick?: (item: WorkOrderKanbanItem) => void
   isCompactView?: boolean
+  showAllCompletedButton?: boolean
+  onShowAllCompleted?: () => void
 }
 
 
-const KanbanColumn: React.FC<DroppableColumnProps> = ({ 
-    column, 
-    onCardClick, 
-    isCompactView = false 
+const KanbanColumn: React.FC<DroppableColumnProps> = ({
+    column,
+    onCardClick,
+    isCompactView = false,
+    showAllCompletedButton = false,
+    onShowAllCompleted,
 }) => {
     const { setDragOver, handleDrop, isDragging, dragOverColumn } = useDragDrop()
     
@@ -117,6 +122,21 @@ const KanbanColumn: React.FC<DroppableColumnProps> = ({
                 </AnimatePresence>
             </div>
         </ScrollArea>
+
+        {/* Show all completed - footer only when cap hit */}
+        {showAllCompletedButton && onShowAllCompleted && (
+            <div className="flex-shrink-0 p-3 border-t border-border bg-slate-50 dark:bg-[#111111]">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-muted-foreground hover:text-foreground"
+                    onClick={onShowAllCompleted}
+                >
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    Show all completed
+                </Button>
+            </div>
+        )}
 
         {/* Column drag overlay */}
         {isDragOver && (

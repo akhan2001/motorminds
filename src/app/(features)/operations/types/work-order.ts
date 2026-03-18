@@ -89,6 +89,9 @@ export type WorkOrderStatus =
 
 export type WorkOrderPriority = 'low' | 'medium' | 'high' | 'urgent'
 
+/** Filter for completed work orders in Kanban view */
+export type CompletedFilter = 'all' | '1day' | '7days' | '30days' | '90days'
+
 export interface WorkOrderItem {
     id: string
     work_order_id: string

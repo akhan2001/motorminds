@@ -1,6 +1,6 @@
 // Main service for work order CRUD operations
 import { createClient } from '@/lib/supabase'
-import type { WorkOrder, WorkOrderWithDetails, WorkOrderItem, WorkOrderStatus } from '../types/work-order'
+import type { WorkOrder, WorkOrderWithDetails, WorkOrderItem, WorkOrderStatus, CompletedFilter } from '../types/work-order'
 import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 import { workOrderArchiveService } from './work-order-archive-service'
 import { workOrderPermissions } from './work-order-permissions'
@@ -28,8 +28,8 @@ export class WorkOrderService {
 
     // GET work orders with customer and vehicle details for display
     // Fetches ALL active work orders (pending, approved, in_progress, waiting_parts, waiting_customer, ready)
-    // and completed/invoiced work orders (all or past 90 days based on completedFilter)
-    async getWorkOrdersWithDetails(shopId: string, completedFilter: 'all' | '90days' = 'all'): Promise<WorkOrderWithDetails[]> {
+    // and completed/invoiced work orders (all, past 30 days, or past 90 days based on completedFilter)
+    async getWorkOrdersWithDetails(shopId: string, completedFilter: CompletedFilter = '30days', options?: { limitCompleted?: number }): Promise<WorkOrderWithDetails[]> {
         const baseQuery = `
             id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
             customer:customers(id, customer_name, customer_phone, customer_email),
@@ -55,7 +55,7 @@ export class WorkOrderService {
             throw new Error(`Failed to fetch active work orders: ${activeError.message}`)
         }
 
-        // Build completed/invoiced query - apply 90-day filter when requested
+        // Build completed/invoiced query - apply date filter and/or limit when requested
         let completedQuery = this.supabase
             .from('work_orders')
             .select(baseQuery)
@@ -64,12 +64,27 @@ export class WorkOrderService {
             .in('status', ['completed', 'invoiced'])
             .order('completed_at', { ascending: false })
 
-        if (completedFilter === '90days') {
+        if (completedFilter === '1day') {
+            const oneDayAgo = new Date()
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1)
+            completedQuery = completedQuery.gte('completed_at', oneDayAgo.toISOString())
+        } else if (completedFilter === '7days') {
+            const sevenDaysAgo = new Date()
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+            completedQuery = completedQuery.gte('completed_at', sevenDaysAgo.toISOString())
+        } else if (completedFilter === '30days') {
+            const thirtyDaysAgo = new Date()
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+            completedQuery = completedQuery.gte('completed_at', thirtyDaysAgo.toISOString())
+        } else if (completedFilter === '90days') {
             const ninetyDaysAgo = new Date()
             ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-            completedQuery = completedQuery
-                .gte('completed_at', ninetyDaysAgo.toISOString())
-                .limit(100)
+            completedQuery = completedQuery.gte('completed_at', ninetyDaysAgo.toISOString())
+        }
+
+        // Cap completed when filter is 'all' and limitCompleted is passed (50 = cap; undefined = no limit / "show all")
+        if (completedFilter === 'all' && options?.limitCompleted !== undefined) {
+            completedQuery = completedQuery.limit(options.limitCompleted)
         }
 
         const { data: completedWorkOrders, error: completedError } = await completedQuery
