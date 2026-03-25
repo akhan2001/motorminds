@@ -3,7 +3,8 @@ import { StyleSheet } from '@react-pdf/renderer'
 export const professionalTemplateStyles = StyleSheet.create({
     page: {
         paddingTop: 10,
-        paddingBottom: 10,
+        // Reserve space for fixed footer on every page
+        paddingBottom: 45,
         paddingLeft: 15,
         paddingRight: 15,
         fontSize: 10,
@@ -185,10 +186,11 @@ export const professionalTemplateStyles = StyleSheet.create({
         lineHeight: 1.4,
     },
     footer: {
+        // Fixed footer rendered on every page (see component `fixed`)
         position: 'absolute',
-        bottom: 20,
-        left: 30,
-        right: 30,
+        bottom: 10,
+        left: 15,
+        right: 15,
         textAlign: 'center',
         fontSize: 8,
         color: '#9ca3af',
