@@ -409,8 +409,14 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
 
                 {/* Footer */}
                 <View style={styles.footer} fixed>
-                    <Text>Thank you for your business!</Text>
-                    <Text>Generated on {new Date().toLocaleDateString()}</Text>
+                    <Text
+                        render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
+                    />
+                    <Text
+                        render={({ pageNumber, totalPages }) =>
+                            pageNumber === totalPages ? 'Thank you for your business!' : ''
+                        }
+                    />
                 </View>
             </Page>
         </Document>
