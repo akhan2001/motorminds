@@ -23,7 +23,32 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
     }
 
     // Calculate totals - only active items, exclude expenses (tracking only), handle discounts correctly
-    const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false && (item as any).item_type !== 'expense')
+    const activeItems = invoice.invoice_items.filter(
+        item => (item as any).active !== false && (item as any).item_type !== 'expense'
+    )
+
+    // Order line items by type (stable within each type)
+    const ITEM_TYPE_ORDER: Record<string, number> = {
+        labor: 0,
+        part: 1,
+        service: 2,
+        fee: 3,
+        package: 4,
+        discount: 5,
+    }
+
+    const orderedItems = activeItems
+        .map((item, originalIndex) => ({ item, originalIndex }))
+        .sort((a, b) => {
+            const aType = (a.item as any).item_type as string | undefined
+            const bType = (b.item as any).item_type as string | undefined
+            const aRank = ITEM_TYPE_ORDER[aType ?? ''] ?? 999
+            const bRank = ITEM_TYPE_ORDER[bType ?? ''] ?? 999
+
+            if (aRank !== bRank) return aRank - bRank
+            return a.originalIndex - b.originalIndex
+        })
+        .map(({ item }) => item)
     const subtotal = activeItems.reduce((sum, item) => {
         // Discounts subtract from subtotal, all other items add
         if ((item as any).item_type === 'discount') {
@@ -37,7 +62,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
 
     return (
         <Document>
-            <Page size="A4" style={styles.page}>
+            <Page size="A4" style={styles.page} wrap>
                 {/* Watermark - Only show if paid */}
                 {invoice.status === 'paid' && (
                     <View style={styles.watermark}>
@@ -228,6 +253,87 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             </View>
                         )}
 
+                        {/* Recommendation/Notes */}
+                        {invoice.notes && (
+                            <View style={styles.notes}>
+                                <Text style={styles.notesTitle}>Recommendation:</Text>
+                                <Text style={styles.notesText}>{invoice.notes}</Text>
+                            </View>
+                        )}
+
+                        {/* Payments */}
+                        {(invoice.status === 'paid' || invoice.status === 'partially_paid' ||
+                            invoice.payment_method || invoice.paid_date || invoice.payment_reference ||
+                            (invoice.payments && invoice.payments.length > 0)) && (
+                                <View style={styles.paymentInfo}>
+                                    <Text style={styles.sectionTitle}>Payments</Text>
+
+                                    {/* Payment History Table */}
+                                    {invoice.payments && invoice.payments.length > 0 ? (
+                                        <View style={styles.paymentHistory}>
+                                            <View style={styles.paymentHistoryHeader}>
+                                                <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Date</Text>
+                                                <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Method</Text>
+                                                <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Amount</Text>
+                                                <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Reference</Text>
+                                            </View>
+                                            {invoice.payments
+                                                .filter(payment => !payment.deleted)
+                                                .sort((a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime())
+                                                .map((payment, index) => (
+                                                    <View key={payment.id || index} style={styles.paymentHistoryRow}>
+                                                        <Text style={{ fontSize: 9, width: '25%' }}>
+                                                            {formatDate(payment.payment_date)}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 9, width: '25%' }}>
+                                                            {formatPaymentMethod(payment.payment_method)}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 9, width: '25%', textAlign: 'right' }}>
+                                                            {formatCurrency(payment.amount)}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 9, width: '25%', textAlign: 'right', color: '#6b7280' }}>
+                                                            {payment.payment_reference || '-'}
+                                                        </Text>
+                                                    </View>
+                                                ))}
+                                        </View>
+                                    ) : (
+                                        // Fallback: Show individual fields if no payment history array
+                                        <>
+                                            {(() => {
+                                                const latestPayment = invoice.payments && invoice.payments.length > 0
+                                                    ? invoice.payments.filter(p => !p.deleted).sort((a, b) =>
+                                                        new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+                                                    )[0]
+                                                    : null
+                                                const displayPaymentMethod = invoice.payment_method || latestPayment?.payment_method
+
+                                                return displayPaymentMethod ? (
+                                                    <View style={{ marginBottom: 4 }}>
+                                                        <Text style={styles.label}>Payment Method</Text>
+                                                        <Text style={styles.value}>{formatPaymentMethod(displayPaymentMethod)}</Text>
+                                                    </View>
+                                                ) : null
+                                            })()}
+
+                                            {invoice.paid_date && (
+                                                <View style={{ marginBottom: 4 }}>
+                                                    <Text style={styles.label}>Paid Date</Text>
+                                                    <Text style={styles.value}>{formatDate(invoice.paid_date)}</Text>
+                                                </View>
+                                            )}
+
+                                            {invoice.payment_reference && (
+                                                <View style={{ marginBottom: 4 }}>
+                                                    <Text style={styles.label}>Payment Reference</Text>
+                                                    <Text style={styles.value}>{invoice.payment_reference}</Text>
+                                                </View>
+                                            )}
+                                        </>
+                                    )}
+                                </View>
+                            )}
+
                         <View style={styles.table}>
                             <Text style={styles.sectionTitle}>Items & Services</Text>
                             <View style={styles.tableHeader}>
@@ -237,7 +343,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 <Text style={styles.col4}>Unit Price</Text>
                                 <Text style={styles.col5}>Total</Text>
                             </View>
-                            {activeItems.map((item, index) => {
+                            {orderedItems.map((item, index) => {
                                 const isDiscount = (item as any).item_type === 'discount'
                                 const itemNotes = (item as any).invoice_specific_notes
                                 return (
@@ -263,7 +369,8 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                     </View>
 
                     {/* Totals */}
-                    <View style={styles.totalsSection}>
+                    {/* Keep totals together; if there's not enough room, it will move to the next page */}
+                    <View style={styles.totalsSection} wrap={false}>
                         <View style={styles.totalsBox}>
                             {(() => {
                                 // Calculate discount items total
@@ -298,91 +405,10 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                         </View>
                     </View>
 
-                    {/* Recommendation/Notes */}
-                    {invoice.notes && (
-                        <View style={styles.notes}>
-                            <Text style={styles.notesTitle}>Recommendation:</Text>
-                            <Text style={styles.notesText}>{invoice.notes}</Text>
-                        </View>
-                    )}
-
-                    {/* Payments */}
-                    {(invoice.status === 'paid' || invoice.status === 'partially_paid' ||
-                        invoice.payment_method || invoice.paid_date || invoice.payment_reference ||
-                        (invoice.payments && invoice.payments.length > 0)) && (
-                            <View style={styles.paymentInfo}>
-                                <Text style={styles.sectionTitle}>Payments</Text>
-
-                                {/* Payment History Table */}
-                                {invoice.payments && invoice.payments.length > 0 ? (
-                                    <View style={styles.paymentHistory}>
-                                        <View style={styles.paymentHistoryHeader}>
-                                            <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Date</Text>
-                                            <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Method</Text>
-                                            <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Amount</Text>
-                                            <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Reference</Text>
-                                        </View>
-                                        {invoice.payments
-                                            .filter(payment => !payment.deleted)
-                                            .sort((a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime())
-                                            .map((payment, index) => (
-                                                <View key={payment.id || index} style={styles.paymentHistoryRow}>
-                                                    <Text style={{ fontSize: 9, width: '25%' }}>
-                                                        {formatDate(payment.payment_date)}
-                                                    </Text>
-                                                    <Text style={{ fontSize: 9, width: '25%' }}>
-                                                        {formatPaymentMethod(payment.payment_method)}
-                                                    </Text>
-                                                    <Text style={{ fontSize: 9, width: '25%', textAlign: 'right' }}>
-                                                        {formatCurrency(payment.amount)}
-                                                    </Text>
-                                                    <Text style={{ fontSize: 9, width: '25%', textAlign: 'right', color: '#6b7280' }}>
-                                                        {payment.payment_reference || '-'}
-                                                    </Text>
-                                                </View>
-                                            ))}
-                                    </View>
-                                ) : (
-                                    // Fallback: Show individual fields if no payment history array
-                                    <>
-                                        {(() => {
-                                            const latestPayment = invoice.payments && invoice.payments.length > 0
-                                                ? invoice.payments.filter(p => !p.deleted).sort((a, b) =>
-                                                    new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
-                                                )[0]
-                                                : null
-                                            const displayPaymentMethod = invoice.payment_method || latestPayment?.payment_method
-
-                                            return displayPaymentMethod ? (
-                                                <View style={{ marginBottom: 4 }}>
-                                                    <Text style={styles.label}>Payment Method</Text>
-                                                    <Text style={styles.value}>{formatPaymentMethod(displayPaymentMethod)}</Text>
-                                                </View>
-                                            ) : null
-                                        })()}
-
-                                        {invoice.paid_date && (
-                                            <View style={{ marginBottom: 4 }}>
-                                                <Text style={styles.label}>Paid Date</Text>
-                                                <Text style={styles.value}>{formatDate(invoice.paid_date)}</Text>
-                                            </View>
-                                        )}
-
-                                        {invoice.payment_reference && (
-                                            <View style={{ marginBottom: 4 }}>
-                                                <Text style={styles.label}>Payment Reference</Text>
-                                                <Text style={styles.value}>{invoice.payment_reference}</Text>
-                                            </View>
-                                        )}
-                                    </>
-                                )}
-                            </View>
-                        )}
-
                 </View>
 
                 {/* Footer */}
-                <View style={styles.footer}>
+                <View style={styles.footer} fixed>
                     <Text>Thank you for your business!</Text>
                     <Text>Generated on {new Date().toLocaleDateString()}</Text>
                 </View>
