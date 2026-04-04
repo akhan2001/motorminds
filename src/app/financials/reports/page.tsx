@@ -197,7 +197,7 @@ const ReportsPage = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFetchingData, setIsFetchingData] = useState(false);
 	const [reportData, setReportData] = useState<ExpenseReportData | null>(null);
-	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts' | 'credits'>('general');
+	const [activeTab, setActiveTab] = useState<'all' | 'general' | 'work_order' | 'parts' | 'credits'>('all');
 	const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
 	const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -432,6 +432,25 @@ const ReportsPage = () => {
 		);
 	}
 
+	type AllExpenseRow =
+		| (GeneralExpense & { _tab: 'general' })
+		| (WorkOrderExpense & { _tab: 'work_order' })
+		| (PartsExpense & { _tab: 'parts' })
+		| (CreditRefundItem & { _tab: 'credits' });
+
+	const allExpenses: AllExpenseRow[] = reportData ? [
+		...reportData.generalExpenses.map(e => ({ ...e, _tab: 'general' as const })),
+		...reportData.workOrderExpenses.map(e => ({ ...e, _tab: 'work_order' as const })),
+		...reportData.partsExpenses.map(e => ({ ...e, _tab: 'parts' as const })),
+		...(reportData.creditsRefunds ?? []).map(e => ({ ...e, _tab: 'credits' as const })),
+	].sort((a, b) => {
+		const dateA = a._tab === 'credits' ? (a as CreditRefundItem).refund_date : (a as GeneralExpense).date;
+		const dateB = b._tab === 'credits' ? (b as CreditRefundItem).refund_date : (b as GeneralExpense).date;
+		return dateB.localeCompare(dateA);
+	}) : [];
+
+	const netTotal = reportData ? (reportData.summary.netExpenses ?? reportData.summary.grandTotal) : 0;
+
 	return (
 		<div className="flex flex-col min-h-screen bg-background text-foreground">
 			<Nav />
@@ -578,6 +597,17 @@ const ReportsPage = () => {
 											{/* Tabs */}
 											<div className="flex gap-1 border-b border-border">
 												<button
+													onClick={() => setActiveTab('all')}
+													className={cn(
+														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+														activeTab === 'all'
+															? "border-blue-500 text-blue-600"
+															: "border-transparent text-muted-foreground hover:text-foreground"
+													)}
+												>
+													All Expenses ({allExpenses.length})
+												</button>
+												<button
 													onClick={() => setActiveTab('general')}
 													className={cn(
 														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
@@ -624,6 +654,164 @@ const ReportsPage = () => {
 											</div>
 										</CardHeader>
 										<CardContent className="pt-4">
+											{/* All Expenses Table */}
+											{activeTab === 'all' && (
+												<div className="overflow-x-auto">
+													{allExpenses.length > 0 ? (
+														<table className="w-full text-sm">
+															<thead>
+																<tr className="border-b border-border text-left">
+																	<th className="pb-2 font-medium text-muted-foreground">Date</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Type</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Vendor / Supplier</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Description</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Amount</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
+																</tr>
+															</thead>
+															<tbody>
+																{allExpenses.map((row) => {
+																	if (row._tab === 'general') {
+																		const expense = row as GeneralExpense & { _tab: 'general' };
+																		const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned';
+																		const netAmount = expense.amount - (expense.refund_amount || 0);
+																		return (
+																			<tr
+																				key={`general-${expense.id}`}
+																				className={cn(
+																					"border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors",
+																					isRefunded && "bg-red-50/30 dark:bg-red-500/5"
+																				)}
+																				onClick={() => openExpenseDetail(expense)}
+																			>
+																				<td className="py-3">{formatDate(expense.date)}</td>
+																				<td className="py-3">
+																					<Badge className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-xs">General</Badge>
+																				</td>
+																				<td className="py-3">{expense.vendor || '—'}</td>
+																				<td className="py-3">{expense.description}</td>
+																				<td className="py-3 text-right">
+																					<div className="flex flex-col items-end">
+																						<span className={cn("font-medium", isRefunded && "line-through text-muted-foreground")}>
+																							{formatCurrency(expense.amount)}
+																						</span>
+																						{isRefunded && expense.refund_amount && expense.refund_amount > 0 && (
+																							<span className="text-xs text-green-600 dark:text-green-400">Net: {formatCurrency(Math.max(0, netAmount))}</span>
+																						)}
+																					</div>
+																				</td>
+																				<td className="py-3 text-center">
+																					{isRefunded ? (
+																						<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1"><Undo2 className="h-3 w-3" />Refunded</Badge>
+																					) : expense.is_paid ? (
+																						<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3 mr-1" />Paid</Badge>
+																					) : expense.has_invoice ? (
+																						<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"><Clock className="h-3 w-3 mr-1" />Invoiced</Badge>
+																					) : (
+																						<Badge variant="outline" className="text-muted-foreground"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
+																					)}
+																				</td>
+																			</tr>
+																		);
+																	}
+																	if (row._tab === 'work_order') {
+																		const expense = row as WorkOrderExpense & { _tab: 'work_order' };
+																		const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned';
+																		const netAmount = expense.amount - (expense.refund_amount || 0);
+																		return (
+																			<tr
+																				key={`wo-${expense.id}`}
+																				className={cn(
+																					"border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors",
+																					isRefunded && "bg-red-50/30 dark:bg-red-500/5"
+																				)}
+																				onClick={() => openExpenseDetail(expense)}
+																			>
+																				<td className="py-3">{formatDate(expense.date)}</td>
+																				<td className="py-3">
+																					<Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs">Work Order</Badge>
+																				</td>
+																				<td className="py-3">{expense.vendor || '—'}</td>
+																				<td className="py-3">{expense.description}</td>
+																				<td className="py-3 text-right">
+																					<div className="flex flex-col items-end">
+																						<span className={cn("font-medium", isRefunded && "line-through text-muted-foreground")}>
+																							{formatCurrency(expense.amount)}
+																						</span>
+																						{isRefunded && expense.refund_amount && expense.refund_amount > 0 && (
+																							<span className="text-xs text-green-600 dark:text-green-400">Net: {formatCurrency(Math.max(0, netAmount))}</span>
+																						)}
+																					</div>
+																				</td>
+																				<td className="py-3 text-center">
+																					{isRefunded ? (
+																						<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1"><Undo2 className="h-3 w-3" />Refunded</Badge>
+																					) : expense.is_paid ? (
+																						<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3 mr-1" />Paid</Badge>
+																					) : expense.has_invoice ? (
+																						<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"><Clock className="h-3 w-3 mr-1" />Invoiced</Badge>
+																					) : (
+																						<Badge variant="outline" className="text-muted-foreground"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
+																					)}
+																				</td>
+																			</tr>
+																		);
+																	}
+																	if (row._tab === 'parts') {
+																		const part = row as PartsExpense & { _tab: 'parts' };
+																		return (
+																			<tr key={`parts-${part.id}`} className="border-b border-border/50">
+																				<td className="py-3">{formatDate(part.date)}</td>
+																				<td className="py-3">
+																					<Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs">Parts</Badge>
+																				</td>
+																				<td className="py-3">{part.supplier || '—'}</td>
+																				<td className="py-3">{part.description}</td>
+																				<td className="py-3 text-right font-medium">{formatCurrency(part.total_cost)}</td>
+																				<td className="py-3 text-center">
+																					{part.is_paid ? (
+																						<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3 mr-1" />Paid</Badge>
+																					) : part.has_invoice ? (
+																						<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"><Clock className="h-3 w-3 mr-1" />Invoiced</Badge>
+																					) : (
+																						<Badge variant="outline" className="text-muted-foreground"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
+																					)}
+																				</td>
+																			</tr>
+																		);
+																	}
+																	// credits
+																	const cr = row as CreditRefundItem & { _tab: 'credits' };
+																	return (
+																		<tr key={`cr-${cr.id}`} className="border-b border-border/50">
+																			<td className="py-3">{formatDate(cr.refund_date)}</td>
+																			<td className="py-3">
+																				<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">Credit/Refund</Badge>
+																			</td>
+																			<td className="py-3">{cr.supplier || '—'}</td>
+																			<td className="py-3">{cr.reason}</td>
+																			<td className="py-3 text-right font-medium text-green-600 dark:text-green-400">{formatCurrency(cr.amount)}</td>
+																			<td className="py-3 text-center">
+																				<Badge variant="outline" className="text-xs capitalize">{cr.status}</Badge>
+																			</td>
+																		</tr>
+																	);
+																})}
+															</tbody>
+															<tfoot>
+																<tr className="font-medium">
+																	<td colSpan={4} className="pt-3 text-right">Net Total:</td>
+																	<td className="pt-3 text-right">{formatCurrency(netTotal)}</td>
+																	<td></td>
+																</tr>
+															</tfoot>
+														</table>
+													) : (
+														<p className="text-center py-8 text-muted-foreground">No expenses in this period.</p>
+													)}
+												</div>
+											)}
+
 											{/* General Expenses Table */}
 											{activeTab === 'general' && (
 												<div className="overflow-x-auto">

@@ -409,6 +409,30 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                 </Select>
                                             </div>
                                         </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="issue_date" className="text-muted-foreground dark:text-gray-400 text-xs">Issue Date</Label>
+                                                <Input
+                                                    id="issue_date"
+                                                    type="date"
+                                                    value={formData.issue_date}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, issue_date: e.target.value }))}
+                                                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="due_date" className="text-muted-foreground dark:text-gray-400 text-xs">Due Date</Label>
+                                                <Input
+                                                    id="due_date"
+                                                    type="date"
+                                                    value={formData.due_date || ''}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value || null }))}
+                                                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
