@@ -261,6 +261,18 @@ export function WorkOrderGenericItems({
                 )
             ) : (
                 <div className="space-y-3">
+                    {isEditing && !readOnly && (
+                        <Button
+                            type="button"
+                            onClick={addItem}
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-dashed border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white"
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add {title.endsWith('s') ? title.slice(0, -1) : title}
+                        </Button>
+                    )}
                     {items.map((item, index) => (
                         <div
                             key={item.id}
