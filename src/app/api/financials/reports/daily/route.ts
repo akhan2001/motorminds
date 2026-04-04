@@ -64,6 +64,22 @@ export async function GET(req: NextRequest) {
             // Don't throw - continue without work orders data
         }
 
+        // Fetch invoices linked to the completed work orders (regardless of paid_date)
+        const completedWoIds = (completedWorkOrders || []).map(wo => wo.id).filter(Boolean)
+        let workOrderInvoiceMap: Record<string, { total_amount: number; payments: any[] | null; payment_method: string | null; status: string }> = {}
+
+        if (completedWoIds.length > 0) {
+            const { data: woInvoices } = await supabase
+                .from('invoices_table')
+                .select('work_order_id, total_amount, payments, payment_method, status')
+                .eq('shop_id', shopId)
+                .in('work_order_id', completedWoIds)
+
+            ;(woInvoices || []).forEach((inv: any) => {
+                if (inv.work_order_id) workOrderInvoiceMap[inv.work_order_id] = inv
+            })
+        }
+
         // Count unique vehicles from completed work orders (Cars Serviced)
         const uniqueVehicleIds = new Set<string>();
         (completedWorkOrders || []).forEach(wo => {
@@ -212,6 +228,23 @@ export async function GET(req: NextRequest) {
         const vehiclesServiced = (completedWorkOrders || []).map((wo) => {
             const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
             const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
+            const invoice = workOrderInvoiceMap[wo.id] ?? null;
+
+            // Derive unique payment methods: prefer payments array, fallback to invoice-level field
+            const paymentMethods: string[] = [];
+            if (invoice) {
+                const payments = invoice.payments as any[] | null;
+                if (payments && payments.length > 0) {
+                    const seen = new Set<string>();
+                    payments.filter((p: any) => !p.deleted).forEach((p: any) => {
+                        const m = p.payment_method || 'other';
+                        if (!seen.has(m)) { seen.add(m); paymentMethods.push(m); }
+                    });
+                } else if (invoice.payment_method) {
+                    paymentMethods.push(invoice.payment_method);
+                }
+            }
+
             return {
                 id: vehicle?.id,
                 work_order_id: wo.id,
@@ -219,6 +252,8 @@ export async function GET(req: NextRequest) {
                 license_plate: vehicle?.license_plate,
                 work_order_title: wo.title,
                 customer_name: (customer as { customer_name?: string } | null)?.customer_name || 'Unknown',
+                paid_amount: invoice?.status === 'paid' ? (Number(invoice.total_amount) || null) : null,
+                payment_method_labels: paymentMethods.map(formatPaymentMethodLabel),
             };
         }).filter((v) => v.id != null);
 
