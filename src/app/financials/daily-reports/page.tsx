@@ -38,6 +38,8 @@ interface DailyReportData {
 		license_plate: string;
 		work_order_title: string;
 		customer_name: string;
+		paid_amount: number | null;
+		payment_method_labels: string[];
 	}>;
 }
 
@@ -348,7 +350,8 @@ export default function DailyReportsPage() {
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vehicle</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">License Plate</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Work Order</th>
+												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Paid Amount</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</th>
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-border">
@@ -367,8 +370,11 @@ export default function DailyReportsPage() {
 													<td className="px-4 py-3 text-sm text-muted-foreground">
 														{vehicle.customer_name}
 													</td>
+													<td className="px-4 py-3 text-sm text-right font-medium text-green-600 dark:text-green-400">
+														{vehicle.paid_amount != null ? formatCurrency(vehicle.paid_amount) : '—'}
+													</td>
 													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{vehicle.work_order_title || 'Untitled'}
+														{vehicle.payment_method_labels?.length > 0 ? vehicle.payment_method_labels.join(', ') : '—'}
 													</td>
 												</tr>
 											))}
