@@ -16,10 +16,18 @@ import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import { WorkOrderAdvancePaymentsSection } from '../shared/WorkOrderAdvancePaymentsSection'
+import { WorkOrderSendChoiceModal } from '../shared/WorkOrderSendChoiceModal'
+import { WorkOrderSendEmailModal } from '../shared/WorkOrderSendEmailModal'
+import { WorkOrderSendSmsModal } from '../shared/WorkOrderSendSmsModal'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
 import { workOrderService } from '../../../lib/work-order-service'
+import { downloadWorkOrderPDF } from '../../../lib/work-order-pdf-generator'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { prepareShopBrandingWithLogo } from '../../../../financials/lib/pdf/logo-utils'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
+
+const SEND_PRINT_STATUSES = ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer', 'ready']
 
 interface WorkOrderEditLeftPanelProps {
     workOrder: WorkOrderKanbanItem
@@ -118,6 +126,30 @@ export function WorkOrderEditLeftPanel({
 
     const handleCancel = () => {
         form.setIsEditing(false)
+    }
+
+    // Send / Print state
+    const [isSendChoiceOpen, setIsSendChoiceOpen] = useState(false)
+    const [isSendEmailOpen, setIsSendEmailOpen] = useState(false)
+    const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
+    const [isPrinting, setIsPrinting] = useState(false)
+    const { data: shopInfo } = useShopInfo()
+
+    const showSendPrint = SEND_PRINT_STATUSES.includes(workOrderDetails.status)
+
+    const handleSend = () => setIsSendChoiceOpen(true)
+
+    const handlePrint = async () => {
+        if (!shopInfo) { toast.error('Shop information not available'); return }
+        setIsPrinting(true)
+        try {
+            const shop = await prepareShopBrandingWithLogo(shopInfo)
+            await downloadWorkOrderPDF(workOrderDetails, workOrderItems, shop)
+        } catch {
+            toast.error('Failed to generate PDF')
+        } finally {
+            setIsPrinting(false)
+        }
     }
 
     const handleTechnicianSelect = (technicianId: string, technicianName: string) => {
@@ -328,6 +360,32 @@ export function WorkOrderEditLeftPanel({
                 onCancel={handleCancel}
                 onClose={onClose}
                 onDelete={() => setShowDeleteConfirmation(true)}
+                onSend={showSendPrint ? handleSend : undefined}
+                onPrint={showSendPrint ? handlePrint : undefined}
+                isPrinting={isPrinting}
+            />
+
+            {/* Send / Print Modals */}
+            <WorkOrderSendChoiceModal
+                workOrder={workOrderDetails}
+                isOpen={isSendChoiceOpen}
+                onClose={() => setIsSendChoiceOpen(false)}
+                onEmailChoice={() => { setIsSendChoiceOpen(false); setIsSendEmailOpen(true) }}
+                onSmsChoice={() => { setIsSendChoiceOpen(false); setIsSendSmsOpen(true) }}
+            />
+            <WorkOrderSendEmailModal
+                workOrder={workOrderDetails}
+                workOrderItems={workOrderItems}
+                isOpen={isSendEmailOpen}
+                onClose={() => setIsSendEmailOpen(false)}
+                onConfirm={() => setIsSendEmailOpen(false)}
+            />
+            <WorkOrderSendSmsModal
+                workOrder={workOrderDetails}
+                workOrderItems={workOrderItems}
+                isOpen={isSendSmsOpen}
+                onClose={() => setIsSendSmsOpen(false)}
+                onConfirm={() => setIsSendSmsOpen(false)}
             />
 
             {/* Delete Confirmation Dialog */}

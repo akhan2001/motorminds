@@ -1,6 +1,6 @@
 'use client'
 
-import { Trash2 } from "lucide-react"
+import { Trash2, Send, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -17,6 +17,10 @@ export interface WorkOrderModalFooterProps {
     onClose: () => void
     onDelete?: () => void
     deleteDisabledReason?: string
+    /** Show Send + Print buttons (for estimates and in-progress work orders) */
+    onSend?: () => void
+    onPrint?: () => void
+    isPrinting?: boolean
     className?: string
 }
 
@@ -33,6 +37,9 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     onClose,
     onDelete,
     deleteDisabledReason,
+    onSend,
+    onPrint,
+    isPrinting = false,
     className = ""
 }) => {
     return (
@@ -97,6 +104,25 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                     </>
                 ) : (
                     <>
+                        {onSend && (
+                            <Button
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                onClick={onSend}
+                            >
+                                <Send className="h-4 w-4 mr-2" />
+                                Send
+                            </Button>
+                        )}
+                        {onPrint && (
+                            <Button
+                                className="bg-gray-600 hover:bg-gray-700 text-white"
+                                onClick={onPrint}
+                                disabled={isPrinting}
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                {isPrinting ? 'Generating...' : 'Print / PDF'}
+                            </Button>
+                        )}
                         {onEdit && workOrderStatus !== 'completed' && (
                             <Button
                                 variant="outline"
