@@ -40,9 +40,6 @@ export async function GET(req: NextRequest) {
         endOfDay = bounds.end;
     }
 
-    const startMs = new Date(startOfDay).getTime();
-    const endMs = new Date(endOfDay).getTime();
-
     try {
         // Fetch work orders completed on this day (based on completed_at timestamp)
         const { data: completedWorkOrders, error: workOrdersError } = await supabase
@@ -93,8 +90,8 @@ export async function GET(req: NextRequest) {
         const carsCount = uniqueVehicleIds.size;
         const workOrdersCompletedCount = (completedWorkOrders || []).length;
 
-        // Fetch invoices fully paid today (for invoicesCount, tax/subtotal totals, vehiclesServiced)
-        const { data: paidInvoices, error: invoicesError } = await supabase
+        // Fetch paid invoices for the day (for revenue calculations)
+        const { data: invoices, error: invoicesError } = await supabase
             .from("invoices_table")
             .select(`
                 id,
@@ -120,59 +117,11 @@ export async function GET(req: NextRequest) {
             throw invoicesError;
         }
 
-        // Fetch partially paid invoices — may have payments received today that haven't yet
-        // completed the invoice. Revenue is counted per payment_date, so these matter.
-        const { data: partiallyPaidInvoices, error: partialError } = await supabase
-            .from("invoices_table")
-            .select("id, work_order_id, total_amount, payment_method, payments")
-            .eq("shop_id", shopId)
-            .eq("status", "partially_paid");
-
-        if (partialError) {
-            console.error("Error fetching partially paid invoices for daily report:", partialError);
-        }
-
-        // All work order IDs that have been invoiced (paid or partial).
-        // Advance payments for these WOs are already captured in the invoice's payments[] array
-        // (merged at invoice creation time), so we must not double-count them.
-        const workOrderIdsWithInvoice = new Set([
-            ...(paidInvoices || []).map((inv: any) => inv.work_order_id).filter(Boolean),
-            ...(partiallyPaidInvoices || []).map((inv: any) => inv.work_order_id).filter(Boolean),
-        ]);
-
-        // Revenue + payment method breakdown from invoice payments.
-        // Use individual payment_date (not invoice paid_date) so each payment lands on the
-        // correct day — e.g. a $300 cash payment made March 27 on an invoice fully paid
-        // April 4 counts on March 27, not April 4.
-        let invoiceRevenue = 0;
-        const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
-        const paidInvoiceIds = new Set((paidInvoices || []).map((inv: any) => inv.id));
-
-        const allInvoicesForRevenue = [...(paidInvoices || []), ...(partiallyPaidInvoices || [])];
-        allInvoicesForRevenue.forEach((inv: any) => {
-            const payments = inv.payments as any[] | null;
-            if (payments && Array.isArray(payments) && payments.length > 0) {
-                payments.forEach((payment: any) => {
-                    if (payment.deleted) return;
-                    const paymentDateMs = payment.payment_date ? new Date(payment.payment_date).getTime() : 0;
-                    if (paymentDateMs < startMs || paymentDateMs > endMs) return;
-                    const amount = Number(payment.amount) || 0;
-                    invoiceRevenue += amount;
-                    const method = payment.payment_method || 'other';
-                    if (!paymentMethodBreakdown[method]) paymentMethodBreakdown[method] = { count: 0, amount: 0 };
-                    paymentMethodBreakdown[method].count += 1;
-                    paymentMethodBreakdown[method].amount += amount;
-                });
-            } else if (paidInvoiceIds.has(inv.id)) {
-                // Legacy fallback: paid invoice with no payments array — use invoice-level fields.
-                // Invoice is already filtered by paid_date so this lands on the correct day.
-                const method = inv.payment_method || 'other';
-                if (!paymentMethodBreakdown[method]) paymentMethodBreakdown[method] = { count: 0, amount: 0 };
-                paymentMethodBreakdown[method].count += 1;
-                paymentMethodBreakdown[method].amount += Number(inv.total_amount) || 0;
-                invoiceRevenue += Number(inv.total_amount) || 0;
-            }
-        });
+        // Work orders that already contributed revenue via a paid invoice on this day.
+        // Exclude their advance payments to avoid double-counting (advance applied to invoice counts only in invoice revenue).
+        const workOrderIdsWithPaidInvoiceInDay = new Set(
+            (invoices || []).map((inv: { work_order_id?: string | null }) => inv.work_order_id).filter(Boolean)
+        );
 
         // Fetch work orders with advance_payments for this shop (to include in daily total)
         const { data: workOrdersWithAdvance, error: advanceError } = await supabase
@@ -185,17 +134,18 @@ export async function GET(req: NextRequest) {
         }
 
         // Sum advance payments where payment_date falls within the report day.
-        // Skip work orders that have any invoice — advance payments are merged into the
-        // invoice's payments[] array at invoice creation, so they're already counted above.
+        // Skip work orders in workOrderIdsWithPaidInvoiceInDay (revenue already counted via invoice).
         let advancePaymentsTotal = 0;
         const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
+        const startMsAdv = new Date(startOfDay).getTime();
+        const endMsAdv = new Date(endOfDay).getTime();
         (workOrdersWithAdvance || []).forEach((wo) => {
-            if (workOrderIdsWithInvoice.has(wo.id)) return;
+            if (workOrderIdsWithPaidInvoiceInDay.has(wo.id)) return;
             const payments = (wo.advance_payments as any[] | null) || [];
             payments.forEach((p: any) => {
                 if (p.deleted) return;
                 const paymentDate = p.payment_date ? new Date(p.payment_date).getTime() : 0;
-                if (paymentDate >= startMs && paymentDate <= endMs) {
+                if (paymentDate >= startMsAdv && paymentDate <= endMsAdv) {
                     const amount = Number(p.amount) || 0;
                     advancePaymentsTotal += amount;
                     const method = p.payment_method || "other";
@@ -206,6 +156,36 @@ export async function GET(req: NextRequest) {
                     advancePaymentMethodBreakdown[method].amount += amount;
                 }
             });
+        });
+
+        // Calculate payment method breakdown (invoices first)
+        const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
+
+        (invoices || []).forEach(inv => {
+            // Check payments array first (for multiple payments)
+            const payments = inv.payments as any[] | null;
+            if (payments && Array.isArray(payments) && payments.length > 0) {
+                payments.forEach((payment: any) => {
+                    if (payment.deleted) return; // Skip deleted payments
+                    // Only count this payment in the breakdown if it was received on the report day
+                    const paymentDateMs = payment.payment_date ? new Date(payment.payment_date).getTime() : 0;
+                    if (paymentDateMs < startMsAdv || paymentDateMs > endMsAdv) return;
+                    const method = payment.payment_method || 'other';
+                    if (!paymentMethodBreakdown[method]) {
+                        paymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                    }
+                    paymentMethodBreakdown[method].count += 1;
+                    paymentMethodBreakdown[method].amount += Number(payment.amount) || 0;
+                });
+            } else {
+                // Fallback to invoice-level payment method (invoice is already filtered by paid_date)
+                const method = inv.payment_method || 'other';
+                if (!paymentMethodBreakdown[method]) {
+                    paymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                }
+                paymentMethodBreakdown[method].count += 1;
+                paymentMethodBreakdown[method].amount += Number(inv.total_amount) || 0;
+            }
         });
 
         // Merge advance payment method breakdown into main breakdown
@@ -231,15 +211,17 @@ export async function GET(req: NextRequest) {
             0
         );
 
+        // Calculate totals (invoice revenue + advance payments for the day)
+        const invoiceRevenue = (invoices || []).reduce(
+            (sum, inv) => sum + (Number(inv.total_amount) || 0),
+            0
+        );
         const totalRevenue = invoiceRevenue + advancePaymentsTotal;
-
-        // Tax and subtotal are per-invoice properties, not per-payment.
-        // Use fully paid invoices (paid today) as the basis — these are the closed transactions.
-        const totalTax = (paidInvoices || []).reduce(
+        const totalTax = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.tax_amount) || 0),
             0
         );
-        const totalSubtotal = (paidInvoices || []).reduce(
+        const totalSubtotal = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.subtotal) || 0),
             0
         );
@@ -292,7 +274,7 @@ export async function GET(req: NextRequest) {
             summary: {
                 carsCount,
                 workOrdersCompletedCount,
-                invoicesCount: (paidInvoices || []).length,
+                invoicesCount: (invoices || []).length,
                 totalRevenue,
                 totalSubtotal,
                 totalTax,
