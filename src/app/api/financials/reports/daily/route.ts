@@ -66,12 +66,12 @@ export async function GET(req: NextRequest) {
 
         // Fetch invoices linked to the completed work orders (regardless of paid_date)
         const completedWoIds = (completedWorkOrders || []).map(wo => wo.id).filter(Boolean)
-        let workOrderInvoiceMap: Record<string, { total_amount: number; payments: any[] | null; payment_method: string | null; status: string }> = {}
+        let workOrderInvoiceMap: Record<string, { id: string; invoice_number: string | null; total_amount: number; payments: any[] | null; payment_method: string | null; status: string }> = {}
 
         if (completedWoIds.length > 0) {
             const { data: woInvoices } = await supabase
                 .from('invoices_table')
-                .select('work_order_id, total_amount, payments, payment_method, status')
+                .select('work_order_id, id, invoice_number, total_amount, payments, payment_method, status')
                 .eq('shop_id', shopId)
                 .in('work_order_id', completedWoIds)
 
@@ -137,15 +137,13 @@ export async function GET(req: NextRequest) {
         // Skip work orders in workOrderIdsWithPaidInvoiceInDay (revenue already counted via invoice).
         let advancePaymentsTotal = 0;
         const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
-        const startMsAdv = new Date(startOfDay).getTime();
-        const endMsAdv = new Date(endOfDay).getTime();
         (workOrdersWithAdvance || []).forEach((wo) => {
             if (workOrderIdsWithPaidInvoiceInDay.has(wo.id)) return;
             const payments = (wo.advance_payments as any[] | null) || [];
             payments.forEach((p: any) => {
                 if (p.deleted) return;
-                const paymentDate = p.payment_date ? new Date(p.payment_date).getTime() : 0;
-                if (paymentDate >= startMsAdv && paymentDate <= endMsAdv) {
+                const paymentDateStr = p.payment_date ? p.payment_date.slice(0, 10) : '';
+                if (paymentDateStr === targetDate) {
                     const amount = Number(p.amount) || 0;
                     advancePaymentsTotal += amount;
                     const method = p.payment_method || "other";
@@ -168,8 +166,8 @@ export async function GET(req: NextRequest) {
                 payments.forEach((payment: any) => {
                     if (payment.deleted) return; // Skip deleted payments
                     // Only count this payment in the breakdown if it was received on the report day
-                    const paymentDateMs = payment.payment_date ? new Date(payment.payment_date).getTime() : 0;
-                    if (paymentDateMs < startMsAdv || paymentDateMs > endMsAdv) return;
+                    const paymentDateStr = payment.payment_date ? payment.payment_date.slice(0, 10) : '';
+                    if (paymentDateStr !== targetDate) return;
                     const method = payment.payment_method || 'other';
                     if (!paymentMethodBreakdown[method]) {
                         paymentMethodBreakdown[method] = { count: 0, amount: 0 };
@@ -211,11 +209,24 @@ export async function GET(req: NextRequest) {
             0
         );
 
-        // Calculate totals (invoice revenue + advance payments for the day)
-        const invoiceRevenue = (invoices || []).reduce(
-            (sum, inv) => sum + (Number(inv.total_amount) || 0),
-            0
-        );
+        // Calculate invoice revenue by summing only the payments received on this specific day
+        // (filtered by payment_date, same logic as the payment method breakdown).
+        // This ensures totalRevenue always matches the breakdown total.
+        let invoiceRevenue = 0;
+        (invoices || []).forEach((inv: any) => {
+            const payments = inv.payments as any[] | null;
+            if (payments && Array.isArray(payments) && payments.length > 0) {
+                payments.forEach((payment: any) => {
+                    if (payment.deleted) return;
+                    const paymentDateStr = payment.payment_date ? payment.payment_date.slice(0, 10) : '';
+                    if (paymentDateStr !== targetDate) return;
+                    invoiceRevenue += Number(payment.amount) || 0;
+                });
+            } else {
+                // Legacy fallback: no payments array — invoice is already filtered by paid_date
+                invoiceRevenue += Number(inv.total_amount) || 0;
+            }
+        });
         const totalRevenue = invoiceRevenue + advancePaymentsTotal;
         const totalTax = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.tax_amount) || 0),
@@ -233,19 +244,24 @@ export async function GET(req: NextRequest) {
             const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
             const invoice = workOrderInvoiceMap[wo.id] ?? null;
 
-            // Derive unique payment methods: prefer payments array, fallback to invoice-level field
-            const paymentMethods: string[] = [];
-            if (invoice) {
-                const payments = invoice.payments as any[] | null;
-                if (payments && payments.length > 0) {
-                    const seen = new Set<string>();
-                    payments.filter((p: any) => !p.deleted).forEach((p: any) => {
-                        const m = p.payment_method || 'other';
-                        if (!seen.has(m)) { seen.add(m); paymentMethods.push(m); }
-                    });
-                } else if (invoice.payment_method) {
-                    paymentMethods.push(invoice.payment_method);
-                }
+            // Build individual payments list from invoice
+            const invoicePayments = invoice
+                ? ((invoice.payments as any[] | null) || [])
+                    .filter((p: any) => !p.deleted)
+                    .map((p: any) => ({
+                        amount: Number(p.amount) || 0,
+                        payment_method: p.payment_method || 'other',
+                        payment_date: p.payment_date ?? null,
+                    }))
+                : [];
+
+            // Fallback: if no payments array but legacy payment_method exists, synthesize one entry
+            if (invoice && invoicePayments.length === 0 && invoice.payment_method) {
+                invoicePayments.push({
+                    amount: Number(invoice.total_amount) || 0,
+                    payment_method: invoice.payment_method,
+                    payment_date: null,
+                });
             }
 
             return {
@@ -255,18 +271,23 @@ export async function GET(req: NextRequest) {
                 license_plate: vehicle?.license_plate,
                 work_order_title: wo.title,
                 customer_name: (customer as { customer_name?: string } | null)?.customer_name || 'Unknown',
-                paid_amount: invoice?.status === 'paid' ? (Number(invoice.total_amount) || null) : null,
-                payment_method_labels: paymentMethods.map(formatPaymentMethodLabel),
+                invoice_id: invoice?.id ?? null,
+                invoice_number: invoice?.invoice_number ?? null,
+                invoice_status: invoice?.status ?? null,
+                invoice_total: invoice ? Number(invoice.total_amount) : null,
+                payments: invoicePayments,
             };
         }).filter((v) => v.id != null);
 
         // Format payment method breakdown for response
+        // Use breakdown total as denominator so percentages add up to 100% within the table
+        const breakdownTotal = Object.values(paymentMethodBreakdown).reduce((sum, d) => sum + d.amount, 0);
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({
             method,
             label: formatPaymentMethodLabel(method),
             count: data.count,
             amount: data.amount,
-            percentage: totalRevenue > 0 ? (data.amount / totalRevenue) * 100 : 0
+            percentage: breakdownTotal > 0 ? (data.amount / breakdownTotal) * 100 : 0
         })).sort((a, b) => b.amount - a.amount);
 
         return NextResponse.json({

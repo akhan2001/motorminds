@@ -38,9 +38,43 @@ interface DailyReportData {
 		license_plate: string;
 		work_order_title: string;
 		customer_name: string;
-		paid_amount: number | null;
-		payment_method_labels: string[];
+		invoice_id: string | null;
+		invoice_number: string | null;
+		invoice_status: string | null;
+		invoice_total: number | null;
+		payments: Array<{ amount: number; payment_method: string; payment_date: string | null }>;
 	}>;
+}
+
+function formatPaymentMethodLabel(method: string): string {
+	const labels: Record<string, string> = {
+		credit_card: 'Credit Card',
+		debit_card: 'Debit Card',
+		debit: 'Debit',
+		cash: 'Cash',
+		check: 'Check',
+		bank_transfer: 'Bank Transfer',
+		e_transfer: 'E-Transfer',
+		other: 'Other',
+	};
+	return labels[method] || method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function InvoiceStatusBadge({ status }: { status: string | null }) {
+	if (!status) return <span className="text-muted-foreground">—</span>;
+	const map: Record<string, { label: string; className: string }> = {
+		paid:           { label: 'Paid',     className: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' },
+		partially_paid: { label: 'Partial',  className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' },
+		unpaid:         { label: 'Unpaid',   className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+		sent:           { label: 'Sent',     className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' },
+		overdue:        { label: 'Overdue',  className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' },
+	};
+	const config = map[status] ?? { label: status, className: 'bg-slate-100 text-slate-600' };
+	return (
+		<span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.className}`}>
+			{config.label}
+		</span>
+	);
 }
 
 const formatPercent = (value: number): string => {
@@ -324,7 +358,7 @@ export default function DailyReportsPage() {
 													{dailyReportData.paymentMethods.reduce((sum, pm) => sum + pm.count, 0)}
 												</td>
 												<td className="px-4 py-3 text-sm text-right font-bold text-foreground">
-													{formatCurrency(dailyReportData.summary.totalRevenue)}
+													{formatCurrency(dailyReportData.paymentMethods.reduce((sum, pm) => sum + pm.amount, 0))}
 												</td>
 												<td className="px-4 py-3 text-sm text-right font-medium text-foreground">
 													100%
@@ -348,33 +382,64 @@ export default function DailyReportsPage() {
 										<thead className="bg-slate-50 dark:bg-slate-900/50">
 											<tr>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vehicle</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">License Plate</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Paid Amount</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Payments</th>
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-border">
 											{dailyReportData.vehiclesServiced.map((vehicle, idx) => (
-												<tr 
-													key={`${vehicle.id}-${idx}`} 
+												<tr
+													key={`${vehicle.id}-${idx}`}
 													className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
 													onClick={() => setSelectedWorkOrderId(vehicle.work_order_id)}
 												>
-													<td className="px-4 py-3 text-sm font-medium text-foreground">
-														{vehicle.description}
-													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{vehicle.license_plate || '-'}
+													<td className="px-4 py-3 text-sm">
+														<div className="font-medium text-foreground">{vehicle.description}</div>
+														<div className="text-xs text-muted-foreground mt-0.5">{vehicle.license_plate || '—'}</div>
 													</td>
 													<td className="px-4 py-3 text-sm text-muted-foreground">
 														{vehicle.customer_name}
 													</td>
-													<td className="px-4 py-3 text-sm text-right font-medium text-green-600 dark:text-green-400">
-														{vehicle.paid_amount != null ? formatCurrency(vehicle.paid_amount) : '—'}
+													<td className="px-4 py-3 text-sm">
+														{vehicle.invoice_id ? (
+															<button
+																className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-xs"
+																onClick={(e) => { e.stopPropagation(); setSelectedInvoiceId(vehicle.invoice_number); }}
+															>
+																{vehicle.invoice_number || 'View Invoice'}
+															</button>
+														) : (
+															<span className="text-muted-foreground text-xs">No invoice</span>
+														)}
+														{vehicle.invoice_total != null && (
+															<div className="text-xs text-muted-foreground mt-0.5">
+																Total: {formatCurrency(vehicle.invoice_total)}
+															</div>
+														)}
 													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{vehicle.payment_method_labels?.length > 0 ? vehicle.payment_method_labels.join(', ') : '—'}
+													<td className="px-4 py-3 text-sm">
+														<InvoiceStatusBadge status={vehicle.invoice_status} />
+													</td>
+													<td className="px-4 py-3 text-sm">
+														{vehicle.payments.length > 0 ? (
+															<div className="space-y-1">
+																{vehicle.payments.map((p, i) => (
+																	<div key={i} className="flex items-center gap-2 text-xs">
+																		<span className="font-medium text-foreground">{formatCurrency(p.amount)}</span>
+																		<span className="text-muted-foreground">{formatPaymentMethodLabel(p.payment_method)}</span>
+																		{p.payment_date && (
+																			<span className="text-muted-foreground/70">
+																				{new Date(p.payment_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+																			</span>
+																		)}
+																	</div>
+																))}
+															</div>
+														) : (
+															<span className="text-muted-foreground text-xs">—</span>
+														)}
 													</td>
 												</tr>
 											))}
