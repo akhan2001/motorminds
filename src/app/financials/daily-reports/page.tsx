@@ -31,17 +31,15 @@ interface DailyReportData {
 		amount: number;
 		percentage: number;
 	}>;
-	vehiclesServiced: Array<{
-		id: string;
-		work_order_id: string;
-		description: string;
-		license_plate: string;
-		work_order_title: string;
-		customer_name: string;
-		invoice_id: string | null;
+	paymentsToday: Array<{
+		invoice_id: string;
 		invoice_number: string | null;
 		invoice_status: string | null;
-		invoice_total: number | null;
+		invoice_total: number;
+		work_order_id: string | null;
+		description: string;
+		license_plate: string | null;
+		customer_name: string;
 		payments: Array<{ amount: number; payment_method: string; payment_date: string | null }>;
 	}>;
 }
@@ -370,12 +368,12 @@ export default function DailyReportsPage() {
 							</div>
 						)}
 
-						{/* Vehicles Serviced List */}
-						{dailyReportData.vehiclesServiced.length > 0 && (
+						{/* Payments Received */}
+						{dailyReportData.paymentsToday.length > 0 && (
 							<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
 								<h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-									<Car className="h-5 w-5 text-green-500" />
-									Vehicles Serviced (Completed Work Orders)
+									<Receipt className="h-5 w-5 text-green-500" />
+									Payments Received
 								</h3>
 								<div className="overflow-x-auto">
 									<table className="w-full">
@@ -385,61 +383,46 @@ export default function DailyReportsPage() {
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Payments</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Payments Today</th>
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-border">
-											{dailyReportData.vehiclesServiced.map((vehicle, idx) => (
+											{dailyReportData.paymentsToday.map((row, idx) => (
 												<tr
-													key={`${vehicle.id}-${idx}`}
-													className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-													onClick={() => setSelectedWorkOrderId(vehicle.work_order_id)}
+													key={`${row.invoice_id}-${idx}`}
+													className={`hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors ${row.work_order_id ? 'cursor-pointer' : ''}`}
+													onClick={() => row.work_order_id && setSelectedWorkOrderId(row.work_order_id)}
 												>
 													<td className="px-4 py-3 text-sm">
-														<div className="font-medium text-foreground">{vehicle.description}</div>
-														<div className="text-xs text-muted-foreground mt-0.5">{vehicle.license_plate || '—'}</div>
+														<div className="font-medium text-foreground">{row.description}</div>
+														<div className="text-xs text-muted-foreground mt-0.5">{row.license_plate || '—'}</div>
 													</td>
 													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{vehicle.customer_name}
+														{row.customer_name}
 													</td>
 													<td className="px-4 py-3 text-sm">
-														{vehicle.invoice_id ? (
-															<button
-																className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-xs"
-																onClick={(e) => { e.stopPropagation(); setSelectedInvoiceId(vehicle.invoice_number); }}
-															>
-																{vehicle.invoice_number || 'View Invoice'}
-															</button>
-														) : (
-															<span className="text-muted-foreground text-xs">No invoice</span>
-														)}
-														{vehicle.invoice_total != null && (
-															<div className="text-xs text-muted-foreground mt-0.5">
-																Total: {formatCurrency(vehicle.invoice_total)}
-															</div>
-														)}
+														<button
+															className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-xs"
+															onClick={(e) => { e.stopPropagation(); setSelectedInvoiceId(row.invoice_number); }}
+														>
+															{row.invoice_number || 'View Invoice'}
+														</button>
+														<div className="text-xs text-muted-foreground mt-0.5">
+															Total: {formatCurrency(row.invoice_total)}
+														</div>
 													</td>
 													<td className="px-4 py-3 text-sm">
-														<InvoiceStatusBadge status={vehicle.invoice_status} />
+														<InvoiceStatusBadge status={row.invoice_status} />
 													</td>
 													<td className="px-4 py-3 text-sm">
-														{vehicle.payments.length > 0 ? (
-															<div className="space-y-1">
-																{vehicle.payments.map((p, i) => (
-																	<div key={i} className="flex items-center gap-2 text-xs">
-																		<span className="font-medium text-foreground">{formatCurrency(p.amount)}</span>
-																		<span className="text-muted-foreground">{formatPaymentMethodLabel(p.payment_method)}</span>
-																		{p.payment_date && (
-																			<span className="text-muted-foreground/70">
-																				{new Date(p.payment_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
-																			</span>
-																		)}
-																	</div>
-																))}
-															</div>
-														) : (
-															<span className="text-muted-foreground text-xs">—</span>
-														)}
+														<div className="space-y-1">
+															{row.payments.map((p, i) => (
+																<div key={i} className="flex items-center gap-2 text-xs">
+																	<span className="font-medium text-foreground">{formatCurrency(p.amount)}</span>
+																	<span className="text-muted-foreground">{formatPaymentMethodLabel(p.payment_method)}</span>
+																</div>
+															))}
+														</div>
 													</td>
 												</tr>
 											))}
@@ -450,12 +433,12 @@ export default function DailyReportsPage() {
 						)}
 
 						{/* No data message */}
-						{dailyReportData.summary.carsCount === 0 && (
+						{dailyReportData.paymentsToday.length === 0 && (
 							<div className="bg-white dark:bg-card border border-border rounded-xl p-12 text-center">
-								<Car className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-								<h3 className="text-lg font-semibold text-foreground mb-2">No cars serviced</h3>
+								<Receipt className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+								<h3 className="text-lg font-semibold text-foreground mb-2">No payments received</h3>
 								<p className="text-muted-foreground">
-									There are no completed work orders for {formatDateOnly(selectedDate)}.
+									There are no payments recorded for {formatDateOnly(selectedDate)}.
 								</p>
 							</div>
 						)}
