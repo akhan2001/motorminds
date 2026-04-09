@@ -75,7 +75,7 @@ interface WorkOrdersPageViewProps {
     onWorkOrderCreate: (workOrderData: any) => Promise<{ id: string } | void>
     onCreateModalClose: () => void
     onCompletionModalClose: () => void
-    onCompletionConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => Promise<void>
+    onCompletionConfirm: (sendMessage: boolean, customMessage?: string, selectedTemplateIds?: string[], generateInvoice?: boolean) => Promise<void>
     onWorkOrderCompletionAttempt: (item: WorkOrderKanbanItem) => void
     generatedInvoiceNumber?: string | null
     isCompletionPending?: boolean

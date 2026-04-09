@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { work_order_id, customer_id, service_type } = body
+        const { work_order_id, customer_id, service_type, template_ids } = body
 
         if (!work_order_id || !customer_id) {
             return NextResponse.json(
@@ -65,11 +65,16 @@ export async function POST(request: NextRequest) {
         }
 
         // Get active templates for work_order_complete trigger
-        const templates = await getActiveTemplatesByTrigger(
-            shopId, 
+        const allTemplates = await getActiveTemplatesByTrigger(
+            shopId,
             'work_order_complete',
             service_type as ServiceType || undefined
         )
+
+        // Filter to only the templates selected by the user (if provided)
+        const templates = Array.isArray(template_ids) && template_ids.length > 0
+            ? allTemplates.filter(t => template_ids.includes(t.id))
+            : allTemplates
 
         if (templates.length === 0) {
             return NextResponse.json({
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
 
         let queuedCount = 0
 
-        // Queue a message for each matching template
+        // Queue a message for each selected template
         for (const template of templates) {
             try {
                 // Calculate scheduled send time

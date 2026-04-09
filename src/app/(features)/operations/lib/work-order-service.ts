@@ -232,7 +232,7 @@ export class WorkOrderService {
         return updatedWorkOrder
     }
 
-    async updateWorkOrderStatus(id: string, status: WorkOrderStatus, enableAutomatedMessages: boolean = true): Promise<void> {
+    async updateWorkOrderStatus(id: string, status: WorkOrderStatus, selectedTemplateIds: string[] = []): Promise<void> {
         // Get current work order to check if we're reverting from completed
         const currentWorkOrder = await this.getWorkOrderById(id)
         const isRevertingFromCompleted = currentWorkOrder?.status === 'completed' && status !== 'completed'
@@ -280,8 +280,8 @@ export class WorkOrderService {
         }
 
         // After work order status set to 'completed', trigger automated messages
-        // Only trigger if NOT reverting (i.e., this is a new completion) AND automated messages are enabled
-        if (status === 'completed' && !isRevertingFromCompleted && enableAutomatedMessages) {
+        // Only trigger if NOT reverting and at least one template was selected
+        if (status === 'completed' && !isRevertingFromCompleted && selectedTemplateIds.length > 0) {
             try {
                 // Get work order details for the trigger
                 const workOrder = await this.getWorkOrderById(id)
@@ -314,7 +314,8 @@ export class WorkOrderService {
                         body: JSON.stringify({
                             work_order_id: workOrder.id,
                             customer_id: workOrder.customer_id,
-                            service_type: serviceType
+                            service_type: serviceType,
+                            template_ids: selectedTemplateIds
                         })
                     }).catch((error) => {
                         // Silently handle fetch errors (network issues, etc.)

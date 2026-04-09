@@ -14,7 +14,7 @@ export interface WorkOrderCompletionModalProps {
     workOrder: WorkOrderWithDetails
     isOpen: boolean
     onClose: () => void
-    onConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => void
+    onConfirm: (sendMessage: boolean, customMessage?: string, selectedTemplateIds?: string[], generateInvoice?: boolean) => void
     generatedInvoiceNumber?: string | null // Invoice number if one was just generated
     // For drag-to-complete flow
     onGenerateAndGoToInvoice?: () => Promise<void>

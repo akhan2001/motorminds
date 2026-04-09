@@ -61,7 +61,7 @@ export function WorkOrdersPageContent() {
     const [pendingCompletionData, setPendingCompletionData] = useState<{
         sendMessage: boolean
         customMessage?: string
-        enableAutomatedMessages: boolean
+        selectedTemplateIds: string[]
         workOrder: typeof pageState.completionWorkOrder
         invoiceInfo?: {
             invoice_number: string
@@ -107,12 +107,12 @@ export function WorkOrdersPageContent() {
                 toast.success('Invoice generated successfully')
                 refetch() // Refresh work orders to show invoice status
                 
-                // Mark work order as complete
+                // Mark work order as complete (no automated messages from drag-to-complete flow)
                 await operations.handleCompletionConfirm(
                     workOrder,
                     false, // sendMessage
                     undefined, // customMessage
-                    false // enableAutomatedMessages
+                    [] // no template IDs — drag-to-complete skips automated messages
                 )
                 toast.success('Work order completed successfully')
                 
@@ -151,7 +151,7 @@ export function WorkOrdersPageContent() {
     const handleCompletionConfirmWithSync = async (
         sendMessage: boolean,
         customMessage?: string,
-        enableAutomatedMessages: boolean = true,
+        selectedTemplateIds: string[] = [],
         generateInvoice: boolean = true
     ) => {
         if (!pageState.completionWorkOrder || !shopId) return
@@ -169,7 +169,7 @@ export function WorkOrdersPageContent() {
                     setPendingCompletionData({
                         sendMessage,
                         customMessage,
-                        enableAutomatedMessages,
+                        selectedTemplateIds,
                         workOrder: pageState.completionWorkOrder,
                         invoiceInfo: invoiceStatus.invoice
                     })
@@ -210,7 +210,7 @@ export function WorkOrdersPageContent() {
                 pageState.completionWorkOrder,
                 sendMessage,
                 customMessage,
-                enableAutomatedMessages
+                selectedTemplateIds
             )
             // Clear generated invoice number and close modal after completion
             setGeneratedInvoiceNumber(null)
@@ -256,7 +256,7 @@ export function WorkOrdersPageContent() {
                 workOrder,
                 completionData.sendMessage,
                 completionData.customMessage,
-                completionData.enableAutomatedMessages
+                completionData.selectedTemplateIds
             )
         } catch (error: any) {
             console.error('Error syncing invoice:', error)
@@ -327,12 +327,12 @@ export function WorkOrdersPageContent() {
                 invoiceNumber = invoice.invoice_number
             }
 
-            // Mark work order as complete
+            // Mark work order as complete (no automated messages from drag-to-complete flow)
             await operations.handleCompletionConfirm(
                 dragToCompleteWorkOrder,
                 false, // sendMessage
                 undefined, // customMessage
-                false // enableAutomatedMessages
+                [] // no template IDs — drag-to-complete skips automated messages
             )
             toast.success('Work order completed successfully')
             
@@ -376,12 +376,12 @@ export function WorkOrdersPageContent() {
                 toast.success('Invoice generated successfully')
             }
 
-            // Complete the work order
+            // Complete the work order (no automated messages from this flow)
             await operations.handleCompletionConfirm(
                 dragToCompleteWorkOrder,
                 false, // sendMessage
                 undefined, // customMessage
-                false // enableAutomatedMessages
+                [] // no template IDs
             )
             toast.success('Work order completed successfully')
             

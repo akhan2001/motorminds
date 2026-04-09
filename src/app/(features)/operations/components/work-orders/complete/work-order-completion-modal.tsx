@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Car, User, Phone, FileText, ExternalLink, Clock, Loader2, CheckCircle2 } from 'lucide-react'
+import { Car, User, Phone, FileText, ExternalLink, Clock, Loader2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { useWorkOrderCompletionTemplates } from '../../../hooks/use-active-automated-messages'
 import { formatDelayHours } from '@/app/(features)/messaging/types/message-template'
@@ -24,28 +24,33 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     isGenerating = false
 }) => {
     const router = useRouter()
-    const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
-    
+    const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([])
+
     // Fetch active automated message templates
     const { templates: automatedTemplates, isLoading: loadingTemplates } = useWorkOrderCompletionTemplates(isOpen)
+
+    // Default-select all templates when they load
+    useEffect(() => {
+        if (automatedTemplates.length > 0) {
+            setSelectedTemplateIds(automatedTemplates.map(t => t.id))
+        }
+    }, [automatedTemplates])
     
     // Determine which flow we're in
-    const isDragToCompleteFlow = !!(onGenerateAndGoToInvoice && onGenerateAndComplete)
+    const isDragToCompleteFlow = !!onGenerateAndComplete
     
     // Show button if work order has invoice_id OR if an invoice was just generated
     const hasInvoice = !!workOrder.invoice_id || !!generatedInvoiceNumber
     const invoiceNumber = workOrder.invoice_id || generatedInvoiceNumber
 
     const handleCompleteWithoutInvoice = () => {
-        // No message sent, no invoice generated
-        onConfirm(false, undefined, enableAutomatedMessage, false)
+        onConfirm(false, undefined, selectedTemplateIds, false)
         // Modal will be closed by parent after completion
     }
 
     const handleCompleteWithInvoice = () => {
-        // No message sent, invoice generated
         // Don't close modal here - parent will keep it open to show "Go to Invoice" button
-        onConfirm(false, undefined, enableAutomatedMessage, true)
+        onConfirm(false, undefined, selectedTemplateIds, true)
     }
 
     const handleGoToInvoice = () => {
@@ -56,13 +61,6 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     }
     
     // Drag-to-complete flow handlers
-    const handleGenerateAndGoToInvoice = async () => {
-        if (onGenerateAndGoToInvoice) {
-            await onGenerateAndGoToInvoice()
-            onClose()
-        }
-    }
-
     const handleGenerateAndComplete = async () => {
         if (onGenerateAndComplete) {
             await onGenerateAndComplete()
@@ -140,73 +138,86 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
                     {/* Automated Follow-Up Toggle */}
                     <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                                <div>
-                                    <Label htmlFor="automated-message" className="text-sm font-medium text-foreground dark:text-white cursor-pointer">
-                                        Send automated follow-up messages
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
-                                        Automatically schedules follow-up messages based on your active templates
-                                    </p>
-                                </div>
+                        <div className="flex items-center gap-3 mb-3">
+                            <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-foreground dark:text-white">
+                                    Automated follow-up messages
+                                </p>
+                                <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
+                                    Select which messages to schedule after completion
+                                </p>
                             </div>
-                            <Switch
-                                id="automated-message"
-                                checked={enableAutomatedMessage}
-                                onCheckedChange={setEnableAutomatedMessage}
-                                disabled={automatedTemplates.length === 0}
-                            />
+                            {automatedTemplates.length > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (selectedTemplateIds.length === automatedTemplates.length) {
+                                            setSelectedTemplateIds([])
+                                        } else {
+                                            setSelectedTemplateIds(automatedTemplates.map(t => t.id))
+                                        }
+                                    }}
+                                    className="text-xs text-blue-500 dark:text-blue-400 underline hover:text-blue-600 dark:hover:text-blue-300 flex-shrink-0"
+                                >
+                                    {selectedTemplateIds.length === automatedTemplates.length ? 'Deselect all' : 'Select all'}
+                                </button>
+                            )}
                         </div>
 
-                        {/* Show which templates will be triggered */}
-                        {enableAutomatedMessage && (
-                            <div className="mt-3 pt-3 border-t border-blue-500/20">
-                                {loadingTemplates ? (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                        Loading templates...
-                                    </div>
-                                ) : automatedTemplates.length > 0 ? (
-                                    <div className="space-y-2">
-                                        <p className="text-xs font-medium text-foreground dark:text-gray-300">
-                                            {automatedTemplates.length} message{automatedTemplates.length !== 1 ? 's' : ''} will be scheduled:
-                                        </p>
-                                        <div className="space-y-1.5">
-                                            {automatedTemplates.map((template) => (
-                                                <div 
-                                                    key={template.id} 
-                                                    className="flex items-start gap-2 text-xs bg-blue-500/5 rounded px-2 py-1.5"
-                                                >
-                                                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                                    <div className="flex-1">
-                                                        <span className="font-medium text-foreground dark:text-white">
-                                                            {template.name}
-                                                        </span>
-                                                        <span className="text-muted-foreground dark:text-gray-400">
-                                                            {' '} - Sends in {formatDelayHours(template.delay_hours)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
+                        {loadingTemplates ? (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Loading templates...
+                            </div>
+                        ) : automatedTemplates.length > 0 ? (
+                            <div className="space-y-1.5">
+                                {automatedTemplates.map((template) => {
+                                    const isChecked = selectedTemplateIds.includes(template.id)
+                                    return (
+                                        <div
+                                            key={template.id}
+                                            className="flex items-start gap-2.5 text-xs bg-blue-500/5 rounded px-2 py-1.5 cursor-pointer"
+                                            onClick={() => setSelectedTemplateIds(prev =>
+                                                isChecked ? prev.filter(id => id !== template.id) : [...prev, template.id]
+                                            )}
+                                        >
+                                            <Checkbox
+                                                id={`template-${template.id}`}
+                                                checked={isChecked}
+                                                onCheckedChange={(checked) =>
+                                                    setSelectedTemplateIds(prev =>
+                                                        checked ? [...prev, template.id] : prev.filter(id => id !== template.id)
+                                                    )
+                                                }
+                                                className="mt-0.5 flex-shrink-0"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <div className="flex-1">
+                                                <span className="font-medium text-foreground dark:text-white">
+                                                    {template.name}
+                                                </span>
+                                                <span className="text-muted-foreground dark:text-gray-400">
+                                                    {' '} — sends in {formatDelayHours(template.delay_hours)}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
-                                        <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                                        <p>
-                                            No active templates found. Create templates in{' '}
-                                            <a 
-                                                href="/messaging/automated" 
-                                                className="underline hover:text-amber-700 dark:hover:text-amber-300"
-                                                target="_blank"
-                                            >
-                                                Messaging Settings
-                                            </a>
-                                        </p>
-                                    </div>
-                                )}
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+                                <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                                <p>
+                                    No active templates found. Create templates in{' '}
+                                    <a
+                                        href="/messaging/automated"
+                                        className="underline hover:text-amber-700 dark:hover:text-amber-300"
+                                        target="_blank"
+                                    >
+                                        Messaging Settings
+                                    </a>
+                                </p>
                             </div>
                         )}
                     </div>
@@ -235,18 +246,6 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                     <FileText className="h-4 w-4 mr-2" />
                                 )}
                                 Complete With Invoice
-                            </Button>
-                            <Button
-                                onClick={handleGenerateAndGoToInvoice}
-                                disabled={isGenerating}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                )}
-                                Complete & Go to Invoice
                             </Button>
                         </>
                     ) : hasInvoice ? (

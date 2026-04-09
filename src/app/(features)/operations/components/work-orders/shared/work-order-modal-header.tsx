@@ -1,6 +1,8 @@
 'use client'
 
-import { X } from "lucide-react"
+import React from "react"
+import { X, Stethoscope } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { WorkOrderKanbanItem, WorkOrderWithDetails } from "../../../types/work-order"
 
@@ -13,6 +15,8 @@ export interface WorkOrderModalHeaderProps {
     className?: string
 }
 
+const IN_PROGRESS_STATUSES = new Set(['in_progress', 'waiting_parts', 'waiting_customer'])
+
 export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     workOrder,
     workOrderDetails,
@@ -21,9 +25,12 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     onRevert,
     className = ""
 }) => {
+    const router = useRouter()
     const displayNumber = workOrderDetails?.work_order_number || workOrder.id
-    const isCompleted = workOrderDetails?.status === 'completed' || workOrder.status === 'completed'
-    
+    const currentStatus = workOrderDetails?.status || workOrder.status
+    const isCompleted = currentStatus === 'completed'
+    const isInProgress = IN_PROGRESS_STATUSES.has(currentStatus as string)
+
     return (
         <div className={`flex items-center justify-between p-6 border-b border-border dark:border-[#222222] shrink-0 ${className}`}>
             <div className="space-y-1">
@@ -31,13 +38,24 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
                     {isCreating ? 'Create New Work Order' : `Work Order ${displayNumber}`}
                 </h1>
                 <p className="text-muted-foreground dark:text-gray-400 text-xs sm:text-sm">
-                    {isCreating 
+                    {isCreating
                         ? 'Fill out the details to create a new work order.'
                         : 'Manage work order details and customer information.'
                     }
                 </p>
             </div>
             <div className="flex items-center gap-2">
+                {isInProgress && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push('/ai/diagnostics')}
+                        className="bg-white dark:bg-[#1a1a1a] text-foreground border-border hover:bg-accent dark:hover:bg-zinc-800"
+                    >
+                        <Stethoscope className="h-4 w-4 mr-2" />
+                        Diagnostics
+                    </Button>
+                )}
                 {isCompleted && onRevert && (
                     <Button
                         variant="outline"

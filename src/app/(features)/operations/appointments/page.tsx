@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 
 type CalendarViewType = 'day' | 'week' | 'month'
 import { PageLoading, PageError, PageAuthRequired } from '@/components/common/feedback/page-states'
@@ -14,6 +15,7 @@ import { AppointmentHeader } from '../components/appointments/appointment-header
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
+    const router = useRouter()
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
@@ -29,6 +31,7 @@ export default function AppointmentsPage() {
     const [isAppointmentSheetOpen, setIsAppointmentSheetOpen] = useState(false)
     const [selectedAppointmentForSheet, setSelectedAppointmentForSheet] = useState<AppointmentWithDetails | null>(null)
     const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false)
+    const [appointmentToEdit, setAppointmentToEdit] = useState<AppointmentWithDetails | null>(null)
     
     // Data fetching - operations dashboard disabled for now
     // const { data: dashboardData, isLoading: dashboardLoading } = useOperationsDashboard(shopId || '')
@@ -117,7 +120,8 @@ export default function AppointmentsPage() {
         // Clear form selections and refresh data
         setSelectedDateForForm(undefined)
         setSelectedTimeForForm(undefined)
-        setIsAppointmentFormOpen(false) // Close form dialog after successful creation
+        setIsAppointmentFormOpen(false)
+        setAppointmentToEdit(null)
         // The queries will automatically refetch due to cache invalidation
     }
 
@@ -136,11 +140,10 @@ export default function AppointmentsPage() {
     }
 
     const handleEditAppointment = (appointment: AppointmentWithDetails) => {
-        // TODO: Implement edit appointment functionality
-        console.log('Edit appointment:', appointment)
-        // For now, close sheet and could open form in edit mode
         setIsAppointmentSheetOpen(false)
         setSelectedAppointmentForSheet(null)
+        setAppointmentToEdit(appointment)
+        setIsAppointmentFormOpen(true)
     }
 
     const handleMessageCustomer = (customer: AppointmentWithDetails['customer']) => {
@@ -151,10 +154,9 @@ export default function AppointmentsPage() {
     const handleCreateWorkOrder = async (appointmentId: string) => {
         try {
             const workOrderId = await createWorkOrder.mutateAsync(appointmentId)
-            
-            // Refetch the appointment to get the updated data with work order
+
+            // Update the local state with work order info
             if (selectedAppointmentForSheet) {
-                // Update the local state with work order info
                 setSelectedAppointmentForSheet(prev => prev ? {
                     ...prev,
                     status: 'in_progress',
@@ -165,6 +167,9 @@ export default function AppointmentsPage() {
                     }
                 } : null)
             }
+
+            // Navigate to work orders page and auto-open the new work order modal
+            router.push(`/operations/work-orders?id=${workOrderId}`)
         } catch (error) {
             console.error('Failed to create work order:', error)
             // Error is already handled by the mutation hook
@@ -251,11 +256,15 @@ export default function AppointmentsPage() {
 
             <AppointmentForm
                 isOpen={isAppointmentFormOpen}
-                onClose={() => setIsAppointmentFormOpen(false)}
+                onClose={() => {
+                    setIsAppointmentFormOpen(false)
+                    setAppointmentToEdit(null)
+                }}
                 shopId={shopId}
                 selectedDate={selectedDateForForm}
                 selectedTime={selectedTimeForForm}
                 onSuccess={handleAppointmentSuccess}
+                appointmentToEdit={appointmentToEdit}
             />
         </div>
     )

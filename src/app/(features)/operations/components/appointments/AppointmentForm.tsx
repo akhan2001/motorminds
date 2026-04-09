@@ -32,13 +32,14 @@ import {
 } from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
-import { useCreateAppointment, useCreateWalkInAppointment } from '../../hooks/appointments/useAppointments'
+import { useCreateAppointment, useCreateWalkInAppointment, useUpdateAppointment } from '../../hooks/appointments/useAppointments'
 import { CustomerSearchBar } from '@/components/common/customers/customer-search-bar'
 import { CustomerForm } from '../../../customers/components/Selection/CustomerForm'
 import { VehicleInformation } from '../work-orders/shared/vehicle-information'
 import { WalkInVehicleForm } from '../work-orders/create/WalkInVehicleForm'
-import type { AppointmentCreateData } from '../../types/appointment'
+import type { AppointmentCreateData, AppointmentWithDetails } from '../../types/appointment'
 import type { WalkInVehicleInfo } from '../../../customers/types/vehicle'
+import { VehicleService } from '../../../customers/lib/vehicle-service'
 import { createClient } from '@/utils/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -49,6 +50,7 @@ interface AppointmentFormProps {
     selectedDate?: string
     selectedTime?: string
     onSuccess?: () => void
+    appointmentToEdit?: AppointmentWithDetails | null
 }
 
 interface Customer {
@@ -91,9 +93,11 @@ export function AppointmentForm({
     onClose,
     selectedDate,
     selectedTime,
-    onSuccess
+    onSuccess,
+    appointmentToEdit
 }: AppointmentFormProps) {
     const supabase = createClient()
+    const isEditMode = !!appointmentToEdit
 
     // Form state
     const [formData, setFormData] = useState({
@@ -188,9 +192,46 @@ export function AppointmentForm({
         isLoading: slotsLoading
     } = useAvailableSlots(shopId, formData.appointmentDate)
 
-    // Create appointment mutations
+    // Create/update appointment mutations
     const createAppointment = useCreateAppointment()
     const createWalkInAppointment = useCreateWalkInAppointment()
+    const updateAppointment = useUpdateAppointment()
+
+    // Pre-populate form when editing an existing appointment
+    useEffect(() => {
+        if (appointmentToEdit && isOpen) {
+            setFormData({
+                appointmentDate: appointmentToEdit.appointment_date || format(new Date(), 'yyyy-MM-dd'),
+                startTime: appointmentToEdit.start_time || '',
+                endTime: appointmentToEdit.end_time || '',
+                serviceType: appointmentToEdit.service_type
+                    ? appointmentToEdit.service_type.split(', ').filter(Boolean)
+                    : [],
+                notes: appointmentToEdit.notes || '',
+            })
+            setCustomerType(appointmentToEdit.customer_type || 'registered')
+            if (appointmentToEdit.customer_id) {
+                setSelectedCustomerId(appointmentToEdit.customer_id)
+            }
+            if (appointmentToEdit.vehicle_id) {
+                setSelectedVehicleId(appointmentToEdit.vehicle_id)
+                if (appointmentToEdit.vehicle) {
+                    const v = appointmentToEdit.vehicle
+                    setSelectedVehicle({
+                        id: appointmentToEdit.vehicle_id,
+                        displayName: `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim(),
+                        year: v.year,
+                        make: v.make,
+                        model: v.model,
+                        color: v.color,
+                        vin: v.vin,
+                        license_plate: v.license_plate,
+                        mileage: v.mileage,
+                    })
+                }
+            }
+        }
+    }, [appointmentToEdit, isOpen])
 
     // Handle form field changes
     const handleInputChange = (field: string, value: string) => {
@@ -361,6 +402,20 @@ export function AppointmentForm({
             return selectedVehicle.id
         }
 
+        // Create new vehicle from vehicleFormData when user entered details manually
+        if (vehicleFormData.vehicleYear && vehicleFormData.vehicleMake && vehicleFormData.vehicleModel) {
+            const newVehicle = await VehicleService.createVehicle(customerId, {
+                year: vehicleFormData.vehicleYear,
+                make: vehicleFormData.vehicleMake,
+                model: vehicleFormData.vehicleModel,
+                color: vehicleFormData.vehicleColor || undefined,
+                vin: vehicleFormData.vehicleVin || undefined,
+                licensePlate: vehicleFormData.vehicleLicensePlate || undefined,
+                mileage: vehicleFormData.vehicleMileage || undefined,
+            })
+            return newVehicle.id
+        }
+
         throw new Error('No vehicle selected or created')
     }
 
@@ -371,6 +426,23 @@ export function AppointmentForm({
         if (!validateForm()) return
 
         try {
+            // Edit mode: update existing appointment fields only
+            if (isEditMode && appointmentToEdit) {
+                await updateAppointment.mutateAsync({
+                    id: appointmentToEdit.id,
+                    data: {
+                        appointment_date: formData.appointmentDate,
+                        start_time: formData.startTime,
+                        end_time: formData.endTime,
+                        service_type: formData.serviceType.join(', '),
+                        notes: formData.notes || undefined,
+                    },
+                })
+                onSuccess?.()
+                onClose()
+                return
+            }
+
             if (customerType === 'walk_in') {
                 // Create walk-in appointment
                 await createWalkInAppointment.mutateAsync({
@@ -535,10 +607,10 @@ export function AppointmentForm({
                 <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 relative">
                     <DialogTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        New Appointment
+                        {isEditMode ? 'Edit Appointment' : 'New Appointment'}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                        Create a new appointment for a customer
+                        {isEditMode ? 'Edit appointment details' : 'Create a new appointment for a customer'}
                     </DialogDescription>
                     <button
                         type="button"
@@ -997,18 +1069,18 @@ export function AppointmentForm({
                             <div className="border-t border-border pt-4">
                                 <Button
                                     type="submit"
-                                    disabled={createAppointment.isPending || createWalkInAppointment.isPending}
+                                    disabled={createAppointment.isPending || createWalkInAppointment.isPending || updateAppointment.isPending}
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                                 >
-                                    {(createAppointment.isPending || createWalkInAppointment.isPending) ? (
+                                    {(createAppointment.isPending || createWalkInAppointment.isPending || updateAppointment.isPending) ? (
                                         <>
                                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                                            Creating Appointment...
+                                            {isEditMode ? 'Saving...' : 'Creating Appointment...'}
                                         </>
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4 mr-2" />
-                                            Create Appointment
+                                            {isEditMode ? 'Save Changes' : 'Create Appointment'}
                                         </>
                                     )}
                                 </Button>

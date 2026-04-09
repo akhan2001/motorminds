@@ -191,17 +191,15 @@ export function useWorkOrderOperations(
         completionWorkOrder: WorkOrderWithDetails | null,
         sendMessage: boolean,
         customMessage?: string,
-        enableAutomatedMessages: boolean = true
+        selectedTemplateIds: string[] = []
     ) => {
         if (!completionWorkOrder) return
 
         try {
-            // Use updateWorkOrderStatus to trigger automated messaging
-            // Pass enableAutomatedMessages flag to control whether automated messages are queued
             await updateWorkOrderStatusMutation.mutateAsync({
                 id: completionWorkOrder.id,
                 status: 'completed',
-                enableAutomatedMessages
+                selectedTemplateIds
             })
 
             // Refetch work orders
@@ -226,7 +224,7 @@ export function useWorkOrderOperations(
             await updateWorkOrderStatusMutation.mutateAsync({
                 id: readyWorkOrder.id,
                 status: 'ready',
-                enableAutomatedMessages: false // Don't trigger automated messages for ready status
+                selectedTemplateIds: [] // No automated messages for ready status
             })
 
             // Refetch work orders
