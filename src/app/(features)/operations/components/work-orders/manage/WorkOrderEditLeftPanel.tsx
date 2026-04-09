@@ -27,7 +27,7 @@ import { prepareShopBrandingWithLogo } from '../../../../financials/lib/pdf/logo
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
-const SEND_PRINT_STATUSES = ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer', 'ready']
+const SEND_PRINT_STATUSES = ['pending', 'approved', 'waiting_parts', 'waiting_customer']
 
 interface WorkOrderEditLeftPanelProps {
     workOrder: WorkOrderKanbanItem
