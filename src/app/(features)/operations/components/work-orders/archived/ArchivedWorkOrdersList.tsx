@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Archive } from 'lucide-react'
 import { useAuth } from '../../../hooks/use-auth'
-import { useArchivedWorkOrders } from '../../../hooks/use-archived-work-orders'
+import { useArchivedWorkOrders, useUnarchiveWorkOrder } from '../../../hooks/use-archived-work-orders'
 import { ArchivedWorkOrderCard } from './ArchivedWorkOrderCard'
 import { SearchBar } from '@/app/(features)/admin/components/shared/SearchBar'
 import { useState } from 'react'
@@ -23,6 +23,8 @@ export function ArchivedWorkOrdersList() {
         error
     } = useArchivedWorkOrders(shopId || '')
 
+    const { mutate: unarchive } = useUnarchiveWorkOrder(shopId || '')
+
     // Fetch full work order details when sheet is open
     const { data: selectedWorkOrder } = useWorkOrderWithDetails(selectedWorkOrderId || '')
 
@@ -34,6 +36,16 @@ export function ArchivedWorkOrdersList() {
     const handleCloseSheet = () => {
         setIsSheetOpen(false)
         setSelectedWorkOrderId(null)
+    }
+
+    const handleUnarchive = () => {
+        if (!selectedWorkOrderId) return
+        unarchive(selectedWorkOrderId, {
+            onSuccess: () => {
+                setIsSheetOpen(false)
+                setSelectedWorkOrderId(null)
+            }
+        })
     }
 
     // Client-side filtering since the hook returns all
@@ -157,6 +169,7 @@ export function ArchivedWorkOrdersList() {
                 workOrder={selectedWorkOrder || null}
                 isOpen={isSheetOpen}
                 onClose={handleCloseSheet}
+                onUnarchive={handleUnarchive}
             />
         </Card>
     )

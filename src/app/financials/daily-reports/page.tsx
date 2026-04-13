@@ -23,6 +23,8 @@ interface DailyReportData {
 		totalSubtotal: number;
 		totalTax: number;
 		advancePaymentsTotal?: number;
+		creditsRefundsTotal?: number;
+		invoiceRefundsTotal?: number;
 	};
 	paymentMethods: Array<{
 		method: string;
@@ -297,6 +299,11 @@ export default function DailyReportsPage() {
 									{(dailyReportData.summary.advancePaymentsTotal ?? 0) > 0 && (
 										<span className="block mt-1">
 											Includes {formatCurrency(dailyReportData.summary.advancePaymentsTotal!)} from advance payments
+										</span>
+									)}
+									{(dailyReportData.summary.invoiceRefundsTotal ?? 0) > 0 && (
+										<span className="block mt-1 text-orange-600 dark:text-orange-400">
+											Refunds issued: {formatCurrency(dailyReportData.summary.invoiceRefundsTotal!)}
 										</span>
 									)}
 								</p>

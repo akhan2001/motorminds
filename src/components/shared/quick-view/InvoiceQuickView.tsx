@@ -124,7 +124,13 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
     const activePayments = allPayments.filter(p => !p.deleted)
     const calculatedAmountPaid = activePayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
     const hasActivePayments = activePayments.length > 0
-    
+
+    // Calculate total_refunded from active (non-deleted) refunds
+    const allRefunds = (invoice.refunds || []) as any[]
+    const activeRefunds = allRefunds.filter(r => !r.deleted)
+    const calculatedTotalRefunded = activeRefunds.reduce((sum: number, r: any) => sum + (r.amount || 0), 0)
+    const netPaid = Math.max(0, calculatedAmountPaid - calculatedTotalRefunded)
+
     // Calculate outstanding balance
     const calculatedOutstanding = Math.max(0, total - calculatedAmountPaid)
     const paymentProgress = total > 0 ? (calculatedAmountPaid / total) * 100 : 0
@@ -374,8 +380,8 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                         </Card>
                     )}
 
-                    {/* Expenses Card (from expenses table) */}
-                    {expensesLoading ? (
+                    {/* Expenses Card — hidden */}
+                    {/* {expensesLoading ? (
                         <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                             <div className="p-4">
                                 <div className="flex items-center gap-2 mb-4">
@@ -434,7 +440,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 </div>
                             </div>
                         </Card>
-                    ) : null}
+                    ) : null} */}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
@@ -489,11 +495,27 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                         {formatCurrency(calculatedAmountPaid)}
                                     </span>
                                 </div>
+                                {calculatedTotalRefunded > 0 && (
+                                    <>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-muted-foreground dark:text-gray-400">Total Refunded:</span>
+                                            <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                                -{formatCurrency(calculatedTotalRefunded)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-t border-border dark:border-[#333] pt-2">
+                                            <span className="text-sm font-medium text-foreground dark:text-white">Net Paid:</span>
+                                            <span className="text-sm font-semibold text-foreground dark:text-white">
+                                                {formatCurrency(netPaid)}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm text-muted-foreground dark:text-gray-400">Outstanding:</span>
                                     <span className={`text-sm font-semibold ${
-                                        calculatedOutstanding > 0 
-                                            ? 'text-orange-600 dark:text-orange-400' 
+                                        calculatedOutstanding > 0
+                                            ? 'text-orange-600 dark:text-orange-400'
                                             : 'text-green-600 dark:text-green-400'
                                     }`}>
                                         {formatCurrency(calculatedOutstanding)}
@@ -547,6 +569,38 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 ) : (
                                     <div className="text-center py-4 text-sm text-muted-foreground dark:text-gray-400">
                                         No payments recorded yet
+                                    </div>
+                                )}
+
+                                {/* Refund History */}
+                                {activeRefunds.length > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        <h4 className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                            Refunds
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {activeRefunds.map((refund: any) => (
+                                                <div
+                                                    key={refund.id}
+                                                    className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-500/5 rounded-lg border border-orange-200 dark:border-orange-500/20"
+                                                >
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-medium text-orange-700 dark:text-orange-300">
+                                                                -{formatCurrency(refund.amount)}
+                                                            </span>
+                                                            <Badge variant="outline" className="text-xs border-orange-300 dark:border-orange-500/40 text-orange-600 dark:text-orange-400">
+                                                                {getPaymentMethodLabel(refund.refund_method)}
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
+                                                            <div>{format(new Date(refund.refund_date), 'MMM d, yyyy')}</div>
+                                                            <div className="text-orange-600 dark:text-orange-400">{refund.reason}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

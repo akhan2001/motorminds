@@ -35,6 +35,10 @@ export interface Invoice {
     payments: Payment[]
     amount_paid: number
     outstanding_balance: number
+
+    // Refund tracking
+    refunds: InvoiceRefund[]
+    total_refunded: number
     
     // Walk-in customer support
     customer_type: 'registered' | 'walk_in'
@@ -154,6 +158,23 @@ export interface Payment {
     deleted_at?: string | null  // ISO date string when deleted
     deleted_by?: string | null  // user_id who deleted
     deletion_reason?: string | null  // Optional reason for deletion
+}
+
+// Refund record stored in refunds JSONB array on invoices_table
+export interface InvoiceRefund {
+    id: string              // UUID generated on client
+    amount: number
+    refund_method: PaymentMethod | 'other'
+    refund_date: string     // ISO date string (same pattern as payment_date)
+    reason: string          // required: why the refund was issued
+    notes?: string | null
+    created_at: string
+    created_by?: string | null
+    // Soft-delete fields (for audit trail)
+    deleted?: boolean
+    deleted_at?: string | null
+    deleted_by?: string | null
+    deletion_reason?: string | null
 }
 
 export type ItemType = 

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { Wrench, Send, Download } from 'lucide-react'
+import { Wrench, Send, Download, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 import type { WorkOrderWithDetails } from '../../../types/work-order'
 import { useWorkOrderItems } from '../../../hooks/use-work-order-items'
@@ -15,18 +15,20 @@ import { downloadWorkOrderPDF } from '../../../lib/work-order-pdf-generator'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { prepareShopBrandingWithLogo } from '../../../../financials/lib/pdf/logo-utils'
 
-const SEND_PRINT_STATUSES = ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer', 'ready']
+const SEND_PRINT_STATUSES = ['pending', 'approved', 'waiting_parts', 'waiting_customer']
 
 interface WorkOrderDetailSheetProps {
     workOrder: WorkOrderWithDetails | null
     isOpen: boolean
     onClose: () => void
+    onUnarchive?: () => void
 }
 
 export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
     workOrder,
     isOpen,
-    onClose
+    onClose,
+    onUnarchive
 }) => {
     const { data: workOrderItems = [], isLoading: itemsLoading } = useWorkOrderItems(workOrder?.id || '')
     const { data: shopInfo } = useShopInfo()
@@ -89,23 +91,36 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                         />
                     </div>
 
-                    {showSendPrint && (
+                    {(showSendPrint || onUnarchive) && (
                         <SheetFooter className="flex-shrink-0 border-t border-border dark:border-[#222222] pt-4 mt-4 flex flex-row gap-2 justify-end">
-                            <Button
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                                onClick={() => setIsSendChoiceOpen(true)}
-                            >
-                                <Send className="h-4 w-4 mr-2" />
-                                Send
-                            </Button>
-                            <Button
-                                className="bg-gray-600 hover:bg-gray-700 text-white"
-                                onClick={handlePrint}
-                                disabled={isPrinting}
-                            >
-                                <Download className="h-4 w-4 mr-2" />
-                                {isPrinting ? 'Generating...' : 'Print / PDF'}
-                            </Button>
+                            {onUnarchive && (
+                                <Button
+                                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                                    onClick={onUnarchive}
+                                >
+                                    <ArchiveRestore className="h-4 w-4 mr-2" />
+                                    Unarchive
+                                </Button>
+                            )}
+                            {showSendPrint && (
+                                <>
+                                    <Button
+                                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                                        onClick={() => setIsSendChoiceOpen(true)}
+                                    >
+                                        <Send className="h-4 w-4 mr-2" />
+                                        Send
+                                    </Button>
+                                    <Button
+                                        className="bg-gray-600 hover:bg-gray-700 text-white"
+                                        onClick={handlePrint}
+                                        disabled={isPrinting}
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        {isPrinting ? 'Generating...' : 'Print / PDF'}
+                                    </Button>
+                                </>
+                            )}
                         </SheetFooter>
                     )}
                 </SheetContent>
