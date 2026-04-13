@@ -192,6 +192,21 @@ export async function GET(req: NextRequest) {
             0
         );
 
+        // ── Invoice refunds issued on targetDate ─────────────────────────────────
+        const { data: invoicesWithRefunds } = await supabase
+            .from("invoices_table")
+            .select("id, refunds")
+            .eq("shop_id", shopId);
+
+        let invoiceRefundsTotal = 0;
+        (invoicesWithRefunds || []).forEach((inv: any) => {
+            ((inv.refunds as any[]) || []).forEach((r: any) => {
+                if (r.deleted) return;
+                if (r.refund_date?.slice(0, 10) !== targetDate) return;
+                invoiceRefundsTotal += Number(r.amount) || 0;
+            });
+        });
+
         const totalRevenue = invoiceRevenue + advancePaymentsTotal;
 
         // Tax/subtotal: only from invoices fully paid that have payments today
@@ -251,6 +266,7 @@ export async function GET(req: NextRequest) {
                 totalTax,
                 advancePaymentsTotal,
                 creditsRefundsTotal,
+                invoiceRefundsTotal,
             },
             paymentMethods,
             paymentsToday,
