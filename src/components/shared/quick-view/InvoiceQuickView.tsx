@@ -380,8 +380,8 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                         </Card>
                     )}
 
-                    {/* Expenses Card (from expenses table) */}
-                    {expensesLoading ? (
+                    {/* Expenses Card — hidden */}
+                    {/* {expensesLoading ? (
                         <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                             <div className="p-4">
                                 <div className="flex items-center gap-2 mb-4">
@@ -440,7 +440,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 </div>
                             </div>
                         </Card>
-                    ) : null}
+                    ) : null} */}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">

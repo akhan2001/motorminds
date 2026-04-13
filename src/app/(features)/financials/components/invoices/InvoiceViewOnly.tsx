@@ -423,6 +423,8 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 {invoice.invoice_items.map((item, index) => {
                                     const isActive = (item as any).active !== false // Use the 'active' field from JSONB
                                     const isExpense = item.item_type === 'expense'
+                                    // Expense items are internal tracking only — not shown on invoices
+                                    if (isExpense) return null
                                     return (
                                         <div 
                                             key={index} 
