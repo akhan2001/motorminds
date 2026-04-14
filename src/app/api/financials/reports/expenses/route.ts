@@ -4,7 +4,7 @@ import { formatDateForFilter } from '@/lib/utils/date';
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
-    
+
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -14,14 +14,11 @@ export async function GET(req: NextRequest) {
         return new NextResponse('Missing required query parameters: startDate, endDate, shopId', { status: 400 });
     }
 
-    // Parse dates for filtering using local timezone (EST/America/Toronto)
-    // This ensures date filtering matches what the user selected in their local timezone
-    const startDateStr = formatDateForFilter(startDate); // YYYY-MM-DD in local timezone
+    const startDateStr = formatDateForFilter(startDate);
     const endDateStr = formatDateForFilter(endDate);
 
     try {
-        // 1. Fetch general expenses from unified expenses table (source_type = 'general' or 'invoice')
-        // Invoice expenses (created directly on invoices without work orders) are included here
+        // 1. General & invoice-linked expenses
         const { data: generalExpensesData, error: generalExpensesError } = await supabase
             .from('expenses')
             .select('*')
@@ -37,7 +34,7 @@ export async function GET(req: NextRequest) {
             throw generalExpensesError;
         }
 
-        // 2. Fetch work order expenses from unified expenses table (source_type = 'work_order')
+        // 2. Work order expenses
         const { data: workOrderExpensesData, error: workOrderExpensesError } = await supabase
             .from('expenses')
             .select('*')
@@ -53,12 +50,10 @@ export async function GET(req: NextRequest) {
             throw workOrderExpensesError;
         }
 
-        // 2b. Fetch work orders with vehicles for the work order expenses
+        // 2b. Fetch work orders (for vehicle + status context)
         const expenseWorkOrderIds = new Set<string>();
         (workOrderExpensesData || []).forEach((expense: any) => {
-            if (expense.work_order_id) {
-                expenseWorkOrderIds.add(expense.work_order_id);
-            }
+            if (expense.work_order_id) expenseWorkOrderIds.add(expense.work_order_id);
         });
 
         let workOrdersMap = new Map<string, any>();
@@ -83,14 +78,11 @@ export async function GET(req: NextRequest) {
             if (workOrdersError) {
                 console.error('Error fetching work orders for expenses:', workOrdersError);
             } else {
-                (workOrders || []).forEach((wo: any) => {
-                    workOrdersMap.set(wo.id, wo);
-                });
+                (workOrders || []).forEach((wo: any) => workOrdersMap.set(wo.id, wo));
             }
         }
 
-        // 3. Fetch parts expenses (item_type = 'part' with unit_cost) - COGS
-        // Parts remain in work_order_items table
+        // 3. Parts expenses (COGS) — from work_order_items
         const { data: partsExpenses, error: partsExpensesError } = await supabase
             .from('work_order_items')
             .select(`
@@ -133,117 +125,39 @@ export async function GET(req: NextRequest) {
             throw partsExpensesError;
         }
 
-        // Filter parts by date range (using item created_at)
-        // Convert dates to local timezone for comparison
         const filteredPartsExpenses = (partsExpenses || []).filter((item: any) => {
-            // Get the item date in local timezone as YYYY-MM-DD
             const itemDateStr = formatDateForFilter(item.created_at);
-            // Compare date strings (YYYY-MM-DD format allows string comparison)
             return itemDateStr >= startDateStr && itemDateStr <= endDateStr;
         });
 
-        // 4. Get invoice IDs from work order expenses AND general/invoice expenses to check payment status
-        const invoiceIds = new Set<string>();
-        (workOrderExpensesData || []).forEach((expense: any) => {
-            if (expense.invoice_id) {
-                invoiceIds.add(expense.invoice_id);
-            }
-        });
-        // Also collect invoice IDs from general/invoice expenses (for source_type = 'invoice')
-        (generalExpensesData || []).forEach((expense: any) => {
-            if (expense.invoice_id) {
-                invoiceIds.add(expense.invoice_id);
-            }
-        });
+        // 4. Process general expenses
+        // Expenses are already paid — status is driven by resolution_type / refund_amount only
+        const processedGeneralExpenses = (generalExpensesData || []).map((item: any) => ({
+            id: item.id,
+            type: 'general_expense' as const,
+            source_type: item.source_type as 'general' | 'invoice',
+            description: item.description || 'Expense',
+            vendor: item.vendor || 'N/A',
+            invoice_number: item.invoice_number || '',
+            date: item.expense_date,
+            amount: Number(item.total) || 0,
+            tax: Number(item.tax_amount) || 0,
+            category: item.category || 'Other',
+            payment_method: item.payment_method || '',
+            notes: item.notes || '',
+            invoice_id: item.invoice_id || null,
+            refund_amount: Number(item.refund_amount) || null,
+            resolution_type: item.resolution_type || null,
+        }));
 
-        // Also collect work order IDs from parts for invoice status lookup
-        const workOrderIds = new Set<string>();
-        filteredPartsExpenses.forEach((item: any) => {
-            if (item.work_order_id) {
-                workOrderIds.add(item.work_order_id);
-            }
-        });
-
-        // 5. Fetch invoice statuses for work order expenses (using invoice_id)
-        let invoiceStatusMap = new Map<string, string>();
-        if (invoiceIds.size > 0) {
-            const { data: invoices, error: invoicesError } = await supabase
-                .from('invoices_table')
-                .select('id, status')
-                .in('id', Array.from(invoiceIds));
-
-            if (invoicesError) {
-                console.error('Error fetching invoices by ID:', invoicesError);
-            } else {
-                (invoices || []).forEach((inv: any) => {
-                    invoiceStatusMap.set(inv.id, inv.status);
-                });
-            }
-        }
-
-        // 6. Fetch invoices for parts (using work_order_id)
-        let workOrderInvoiceMap = new Map<string, { hasInvoice: boolean; isPaid: boolean }>();
-        if (workOrderIds.size > 0) {
-            const { data: invoices, error: invoicesError } = await supabase
-                .from('invoices_table')
-                .select('id, work_order_id, status')
-                .in('work_order_id', Array.from(workOrderIds));
-
-            if (invoicesError) {
-                console.error('Error fetching invoices by work order:', invoicesError);
-            } else {
-                (invoices || []).forEach((inv: any) => {
-                    if (inv.work_order_id) {
-                        workOrderInvoiceMap.set(inv.work_order_id, {
-                            hasInvoice: true,
-                            isPaid: inv.status === 'paid'
-                        });
-                    }
-                });
-            }
-        }
-
-        // 7. Process general expenses - map from new expenses table schema
-        // Includes both source_type = 'general' and source_type = 'invoice'
-        const processedGeneralExpenses = (generalExpensesData || []).map((item: any) => {
-            // For invoice-linked expenses, check actual invoice payment status
-            const hasInvoice = !!item.invoice_id;
-            const invoiceStatus = item.invoice_id ? invoiceStatusMap.get(item.invoice_id) : null;
-            // General expenses are considered paid when recorded; invoice expenses depend on invoice status
-            const isPaid = item.source_type === 'invoice' ? invoiceStatus === 'paid' : true;
-            
-            return {
-                id: item.id,
-                type: 'general_expense',
-                source_type: item.source_type, // Include for reference ('general' or 'invoice')
-                description: item.description || 'Expense',
-                vendor: item.vendor || 'N/A',
-                invoice_number: item.invoice_number || '',
-                date: item.expense_date,
-                amount: Number(item.total) || 0,
-                tax: Number(item.tax_amount) || 0,
-                category: item.category || 'Other',
-                payment_method: item.payment_method || '',
-                notes: item.notes || '',
-                has_invoice: hasInvoice,
-                is_paid: isPaid,
-                refund_amount: Number(item.refund_amount) || null,
-                resolution_type: item.resolution_type || null,
-                invoice_id: item.invoice_id || null,
-            };
-        });
-
-        // 8. Process work order expenses - map from new expenses table schema
+        // 5. Process work order expenses
         const processedWorkOrderExpenses = (workOrderExpensesData || []).map((item: any) => {
-            const hasInvoice = !!item.invoice_id;
-            const invoiceStatus = item.invoice_id ? invoiceStatusMap.get(item.invoice_id) : null;
-            const isPaid = invoiceStatus === 'paid';
             const workOrder = item.work_order_id ? workOrdersMap.get(item.work_order_id) : null;
             const vehicle = workOrder?.vehicle;
-            
+
             return {
                 id: item.id,
-                type: 'work_order_expense',
+                type: 'work_order_expense' as const,
                 description: item.description,
                 vendor: item.vendor || 'N/A',
                 invoice_number: item.invoice_number || '',
@@ -253,25 +167,22 @@ export async function GET(req: NextRequest) {
                 payment_method: item.payment_method || '',
                 work_order_id: item.work_order_id,
                 work_order_title: workOrder?.title || 'Work Order',
-                work_order_status: workOrder?.status,
+                work_order_status: workOrder?.status || null,
                 vehicle: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null,
-                license_plate: vehicle?.license_plate,
-                has_invoice: hasInvoice,
-                is_paid: isPaid,
+                license_plate: vehicle?.license_plate || null,
                 refund_amount: Number(item.refund_amount) || null,
                 resolution_type: item.resolution_type || null,
             };
         });
 
-        // 9. Process parts expenses (COGS) with payment status
+        // 6. Process parts (COGS)
         const processedPartsExpenses = filteredPartsExpenses.map((item: any) => {
-            const invoiceInfo = workOrderInvoiceMap.get(item.work_order_id) || { hasInvoice: false, isPaid: false };
             const vehicle = item.work_order?.vehicle;
             const totalCost = (item.unit_cost || 0) * (item.quantity || 1);
-            
+
             return {
                 id: item.id,
-                type: 'parts_cost',
+                type: 'parts_cost' as const,
                 description: item.description,
                 part_number: item.part_number || '',
                 supplier: item.supplier || 'N/A',
@@ -283,15 +194,13 @@ export async function GET(req: NextRequest) {
                 profit: (item.total_price || 0) - totalCost,
                 work_order_id: item.work_order_id,
                 work_order_title: item.work_order?.title || 'Work Order',
-                work_order_status: item.work_order?.status,
+                work_order_status: item.work_order?.status || null,
                 vehicle: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null,
-                license_plate: vehicle?.license_plate,
-                has_invoice: invoiceInfo.hasInvoice,
-                is_paid: invoiceInfo.isPaid,
+                license_plate: vehicle?.license_plate || null,
             };
         });
 
-        // 10. Calculate totals (accounting for refunds - net amount = total - refund_amount)
+        // 7. Totals
         const generalExpensesTotal = processedGeneralExpenses.reduce((sum, e) => {
             const refund = e.refund_amount || 0;
             return sum + Math.max(0, e.amount - refund);
@@ -303,18 +212,11 @@ export async function GET(req: NextRequest) {
             return sum + Math.max(0, e.amount - refund);
         }, 0);
         const workOrderExpensesTax = processedWorkOrderExpenses.reduce((sum, e) => sum + e.tax, 0);
-        const workOrderExpensesPaid = processedWorkOrderExpenses.filter(e => e.is_paid);
-        const workOrderExpensesPaidTotal = workOrderExpensesPaid.reduce((sum, e) => {
-            const refund = e.refund_amount || 0;
-            return sum + Math.max(0, e.amount - refund);
-        }, 0);
 
         const partsExpensesTotal = processedPartsExpenses.reduce((sum, e) => sum + e.total_cost, 0);
-        const partsExpensesPaid = processedPartsExpenses.filter(e => e.is_paid);
-        const partsExpensesPaidTotal = partsExpensesPaid.reduce((sum, e) => sum + e.total_cost, 0);
         const partsProfitTotal = processedPartsExpenses.reduce((sum, e) => sum + e.profit, 0);
 
-        // 10b. Fetch credits/refunds for the date range (money flowing back in)
+        // 8. Credits & Refunds (supplier-side, separate table)
         const { data: creditsRefundsData, error: creditsError } = await supabase
             .from('credits_refunds')
             .select('*')
@@ -358,14 +260,10 @@ export async function GET(req: NextRequest) {
                     count: processedWorkOrderExpenses.length,
                     total: workOrderExpensesTotal,
                     tax: workOrderExpensesTax,
-                    paidCount: workOrderExpensesPaid.length,
-                    paidTotal: workOrderExpensesPaidTotal,
                 },
                 partsExpenses: {
                     count: processedPartsExpenses.length,
                     totalCost: partsExpensesTotal,
-                    paidCount: partsExpensesPaid.length,
-                    paidTotalCost: partsExpensesPaidTotal,
                     totalProfit: partsProfitTotal,
                 },
                 creditsRefunds: {
