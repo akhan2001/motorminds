@@ -257,7 +257,7 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                                             </div>
                                             <div className="text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
                                                 <div>
-                                                    {format(new Date(payment.payment_date), 'MMM d, yyyy')}
+                                                    {format(new Date(payment.payment_date.slice(0, 10) + 'T00:00:00'), 'MMM d, yyyy')}
                                                 </div>
                                                 {payment.payment_reference && (
                                                     <div>Ref: {payment.payment_reference}</div>
@@ -314,7 +314,7 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                                             </div>
                                             <div className="text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
                                                 <div>
-                                                    {format(new Date(refund.refund_date), 'MMM d, yyyy')}
+                                                    {format(new Date(refund.refund_date.slice(0, 10) + 'T00:00:00'), 'MMM d, yyyy')}
                                                 </div>
                                                 <div className="text-orange-600 dark:text-orange-400">
                                                     {refund.reason}
@@ -384,7 +384,7 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                                     </Badge>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                    {format(new Date(paymentToRemove.payment_date), 'MMM d, yyyy')}
+                                    {format(new Date(paymentToRemove.payment_date.slice(0, 10) + 'T00:00:00'), 'MMM d, yyyy')}
                                 </div>
                             </div>
 
@@ -468,7 +468,7 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                                     </Badge>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                    {format(new Date(refundToRemove.refund_date), 'MMM d, yyyy')}
+                                    {format(new Date(refundToRemove.refund_date.slice(0, 10) + 'T00:00:00'), 'MMM d, yyyy')}
                                 </div>
                                 <div className="text-sm text-orange-600 dark:text-orange-400 mt-1">
                                     {refundToRemove.reason}
