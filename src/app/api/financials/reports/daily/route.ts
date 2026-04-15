@@ -40,10 +40,19 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        // ── Completed work orders (for Cars Serviced count only) ─────────────────
+        // ── Completed work orders (for Cars Serviced count) ─────────────────
         const { data: completedWorkOrders, error: workOrdersError } = await supabase
             .from("work_orders")
-            .select("id, vehicle_id")
+            .select(`
+                id,
+                title,
+                status,
+                completed_at,
+                vehicle_id,
+                customer_id,
+                vehicle:customer_vehicles(id, year, make, model, license_plate),
+                customer:customers(id, customer_name)
+            `)
             .eq("shop_id", shopId)
             .eq("status", "completed")
             .gte("completed_at", startOfDay)
@@ -53,6 +62,22 @@ export async function GET(req: NextRequest) {
             console.error("Error fetching work orders for daily report:", workOrdersError);
         }
 
+        // Fetch invoices linked to the completed work orders (regardless of paid_date)
+        const completedWoIds = (completedWorkOrders || []).map(wo => wo.id).filter(Boolean);
+        let workOrderInvoiceMap: Record<string, { id: string; invoice_number: string | null; total_amount: number; payments: any[] | null; payment_method: string | null; status: string }> = {};
+
+        if (completedWoIds.length > 0) {
+            const { data: woInvoices } = await supabase
+                .from("invoices_table")
+                .select("work_order_id, id, invoice_number, total_amount, payments, payment_method, status")
+                .eq("shop_id", shopId)
+                .in("work_order_id", completedWoIds);
+
+            (woInvoices || []).forEach((inv: any) => {
+                if (inv.work_order_id) workOrderInvoiceMap[inv.work_order_id] = inv;
+            });
+        }
+
         const uniqueVehicleIds = new Set<string>();
         (completedWorkOrders || []).forEach(wo => {
             if (wo.vehicle_id) uniqueVehicleIds.add(wo.vehicle_id);
@@ -60,13 +85,8 @@ export async function GET(req: NextRequest) {
         const carsCount = uniqueVehicleIds.size;
         const workOrdersCompletedCount = (completedWorkOrders || []).length;
 
-        // ── All recent invoices (paid or partially paid within 1 year) ───────────
-        // Used for: revenue, breakdown, paymentsToday section, and advance dedup.
-        // We fetch a 1-year window so historical daily reports correctly show
-        // payments that were made on old invoices that are now fully paid.
-        const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
-
-        const { data: recentInvoices, error: invoicesError } = await supabase
+        // ── Paid invoices for the day (by paid_date — database-level filter) ──
+        const { data: invoices, error: invoicesError } = await supabase
             .from("invoices_table")
             .select(`
                 id,
@@ -85,29 +105,22 @@ export async function GET(req: NextRequest) {
                 customer:customers(id, customer_name)
             `)
             .eq("shop_id", shopId)
-            .in("status", ["paid", "partially_paid"])
-            .or(`paid_date.is.null,paid_date.gte.${oneYearAgo}`);
+            .eq("status", "paid")
+            .gte("paid_date", startOfDay)
+            .lte("paid_date", endOfDay);
 
         if (invoicesError) {
             console.error("Error fetching invoices for daily report:", invoicesError);
             throw invoicesError;
         }
 
-        // Filter to invoices that have at least one payment on targetDate
-        const invoicesWithPaymentsToday = (recentInvoices || []).filter((inv: any) =>
-            ((inv.payments as any[]) || []).some(
-                (p: any) => !p.deleted && p.payment_date?.slice(0, 10) === targetDate
-            )
+        // Work order IDs that already contributed revenue via a paid invoice on this day.
+        // Exclude their advance payments to avoid double-counting.
+        const workOrderIdsWithPaidInvoiceInDay = new Set(
+            (invoices || []).map((inv: any) => inv.work_order_id).filter(Boolean)
         );
 
-        // Work order IDs that have been invoiced — advance payments for these are already
-        // captured in the invoice's payments[] array (merged at invoice creation), so we
-        // must not double-count them from work_order.advance_payments.
-        const workOrderIdsWithInvoice = new Set(
-            (recentInvoices || []).map((inv: any) => inv.work_order_id).filter(Boolean)
-        );
-
-        // ── Advance payments (work orders without invoices only) ─────────────────
+        // ── Advance payments (work orders without paid invoices today) ───────
         const { data: workOrdersWithAdvance, error: advanceError } = await supabase
             .from("work_orders")
             .select("id, advance_payments")
@@ -120,34 +133,35 @@ export async function GET(req: NextRequest) {
         let advancePaymentsTotal = 0;
         const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
         (workOrdersWithAdvance || []).forEach((wo) => {
-            if (workOrderIdsWithInvoice.has(wo.id)) return; // already captured via invoice
+            if (workOrderIdsWithPaidInvoiceInDay.has(wo.id)) return;
             const payments = (wo.advance_payments as any[] | null) || [];
             payments.forEach((p: any) => {
                 if (p.deleted) return;
-                if (p.payment_date?.slice(0, 10) !== targetDate) return;
-                const amount = Number(p.amount) || 0;
-                advancePaymentsTotal += amount;
-                const method = p.payment_method || "other";
-                if (!advancePaymentMethodBreakdown[method]) {
-                    advancePaymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                const paymentDateStr = p.payment_date ? p.payment_date.slice(0, 10) : "";
+                if (paymentDateStr === targetDate) {
+                    const amount = Number(p.amount) || 0;
+                    advancePaymentsTotal += amount;
+                    const method = p.payment_method || "other";
+                    if (!advancePaymentMethodBreakdown[method]) {
+                        advancePaymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                    }
+                    advancePaymentMethodBreakdown[method].count += 1;
+                    advancePaymentMethodBreakdown[method].amount += amount;
                 }
-                advancePaymentMethodBreakdown[method].count += 1;
-                advancePaymentMethodBreakdown[method].amount += amount;
             });
         });
 
-        // ── Revenue + payment method breakdown ───────────────────────────────────
-        // Sum only payments received on targetDate (by payment_date) so that
-        // totalRevenue always matches the payment method breakdown total.
+        // ── Revenue + payment method breakdown ───────────────────────────────
         let invoiceRevenue = 0;
         const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
 
-        invoicesWithPaymentsToday.forEach((inv: any) => {
+        (invoices || []).forEach((inv: any) => {
             const payments = inv.payments as any[] | null;
             if (payments && Array.isArray(payments) && payments.length > 0) {
                 payments.forEach((payment: any) => {
                     if (payment.deleted) return;
-                    if (payment.payment_date?.slice(0, 10) !== targetDate) return;
+                    const paymentDateStr = payment.payment_date ? payment.payment_date.slice(0, 10) : "";
+                    if (paymentDateStr !== targetDate) return;
                     const amount = Number(payment.amount) || 0;
                     invoiceRevenue += amount;
                     const method = payment.payment_method || "other";
@@ -158,7 +172,7 @@ export async function GET(req: NextRequest) {
                     paymentMethodBreakdown[method].amount += amount;
                 });
             } else {
-                // Legacy fallback: no payments array — use invoice-level fields
+                // Legacy fallback: no payments array — invoice is already filtered by paid_date
                 const method = inv.payment_method || "other";
                 if (!paymentMethodBreakdown[method]) {
                     paymentMethodBreakdown[method] = { count: 0, amount: 0 };
@@ -178,7 +192,7 @@ export async function GET(req: NextRequest) {
             paymentMethodBreakdown[method].amount += data.amount;
         });
 
-        // ── Credits/refunds ──────────────────────────────────────────────────────
+        // ── Credits/refunds ──────────────────────────────────────────────────
         const { data: creditsRefundsData } = await supabase
             .from("credits_refunds")
             .select("amount")
@@ -192,7 +206,7 @@ export async function GET(req: NextRequest) {
             0
         );
 
-        // ── Invoice refunds issued on targetDate ─────────────────────────────────
+        // ── Invoice refunds issued on targetDate ─────────────────────────────
         const { data: invoicesWithRefunds } = await supabase
             .from("invoices_table")
             .select("id, refunds")
@@ -209,43 +223,56 @@ export async function GET(req: NextRequest) {
 
         const totalRevenue = invoiceRevenue + advancePaymentsTotal;
 
-        // Tax/subtotal: only from invoices fully paid that have payments today
-        const totalTax = invoicesWithPaymentsToday
-            .filter((inv: any) => inv.status === "paid")
-            .reduce((sum: number, inv: any) => sum + (Number(inv.tax_amount) || 0), 0);
-        const totalSubtotal = invoicesWithPaymentsToday
-            .filter((inv: any) => inv.status === "paid")
-            .reduce((sum: number, inv: any) => sum + (Number(inv.subtotal) || 0), 0);
+        const totalTax = (invoices || []).reduce(
+            (sum: number, inv: any) => sum + (Number(inv.tax_amount) || 0),
+            0
+        );
+        const totalSubtotal = (invoices || []).reduce(
+            (sum: number, inv: any) => sum + (Number(inv.subtotal) || 0),
+            0
+        );
 
-        // ── Payments Received section ─────────────────────────────────────────────
-        // One row per invoice that had a payment on targetDate.
-        // Shows only the payments from targetDate (not all historical payments).
-        const paymentsToday = invoicesWithPaymentsToday.map((inv: any) => {
-            const vehicle = Array.isArray(inv.vehicle) ? inv.vehicle[0] : inv.vehicle;
-            const customer = Array.isArray(inv.customer) ? inv.customer[0] : inv.customer;
+        // ── Payments Received section ─────────────────────────────────────────
+        // One row per completed work order with its linked invoice.
+        const paymentsToday = (completedWorkOrders || []).map((wo: any) => {
+            const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
+            const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
+            const invoice = workOrderInvoiceMap[wo.id] ?? null;
 
-            const todaysPayments = ((inv.payments as any[]) || [])
-                .filter((p: any) => !p.deleted && p.payment_date?.slice(0, 10) === targetDate)
-                .map((p: any) => ({
-                    amount: Number(p.amount) || 0,
-                    payment_method: p.payment_method || "other",
-                    payment_date: p.payment_date ?? null,
-                }));
+            // Build payments list from invoice
+            const invoicePayments = invoice
+                ? ((invoice.payments as any[] | null) || [])
+                    .filter((p: any) => !p.deleted)
+                    .map((p: any) => ({
+                        amount: Number(p.amount) || 0,
+                        payment_method: p.payment_method || "other",
+                        payment_date: p.payment_date ?? null,
+                    }))
+                : [];
+
+            // Fallback: if no payments array but legacy payment_method exists
+            if (invoice && invoicePayments.length === 0 && invoice.payment_method) {
+                invoicePayments.push({
+                    amount: Number(invoice.total_amount) || 0,
+                    payment_method: invoice.payment_method,
+                    payment_date: null,
+                });
+            }
 
             return {
-                invoice_id: inv.id,
-                invoice_number: inv.invoice_number,
-                invoice_status: inv.status,
-                invoice_total: Number(inv.total_amount),
-                work_order_id: inv.work_order_id ?? null,
+                invoice_id: invoice?.id ?? null,
+                invoice_number: invoice?.invoice_number ?? null,
+                invoice_status: invoice?.status ?? null,
+                invoice_total: invoice ? Number(invoice.total_amount) : null,
+                work_order_id: wo.id,
                 description: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unknown",
                 license_plate: vehicle?.license_plate ?? null,
                 customer_name: (customer as { customer_name?: string } | null)?.customer_name || "Unknown",
-                payments: todaysPayments,
+                payments: invoicePayments,
             };
-        });
+        }).filter((v: any) => v.description !== "Unknown" || v.invoice_id);
 
-        // ── Payment method breakdown formatting ───────────────────────────────────
+        // ── Payment method breakdown formatting ───────────────────────────────
         const breakdownTotal = Object.values(paymentMethodBreakdown).reduce((sum, d) => sum + d.amount, 0);
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({
             method,
@@ -260,7 +287,7 @@ export async function GET(req: NextRequest) {
             summary: {
                 carsCount,
                 workOrdersCompletedCount,
-                invoicesCount: invoicesWithPaymentsToday.length,
+                invoicesCount: (invoices || []).length,
                 totalRevenue,
                 totalSubtotal,
                 totalTax,

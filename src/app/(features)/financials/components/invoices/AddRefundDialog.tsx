@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAddInvoiceRefund } from '../../hooks/use-invoice-payments'
 import type { PaymentMethod } from '../../types/invoice'
 import { formatCurrency } from '@/lib/utils/currency'
-import { getLocalDateString } from '@/lib/utils/date'
+import { getTorontoDateString } from '@/lib/utils/date'
 
 interface AddRefundDialogProps {
     isOpen: boolean
@@ -41,7 +41,7 @@ export function AddRefundDialog({
 }: AddRefundDialogProps) {
     const [amount, setAmount] = useState<string>('')
     const [refundMethod, setRefundMethod] = useState<PaymentMethod | ''>('')
-    const [refundDate, setRefundDate] = useState<string>(getLocalDateString())
+    const [refundDate, setRefundDate] = useState<string>(getTorontoDateString())
     const [reason, setReason] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
 
@@ -52,7 +52,7 @@ export function AddRefundDialog({
         if (isOpen) {
             setAmount('')
             setRefundMethod('')
-            setRefundDate(getLocalDateString())
+            setRefundDate(getTorontoDateString())
             setReason('')
             setNotes('')
         }
@@ -73,7 +73,7 @@ export function AddRefundDialog({
                 refund: {
                     amount: refundAmount,
                     refund_method: refundMethod as PaymentMethod,
-                    refund_date: new Date(refundDate).toISOString(),
+                    refund_date: refundDate,
                     reason: reason.trim(),
                     notes: notes.trim() || null,
                 },

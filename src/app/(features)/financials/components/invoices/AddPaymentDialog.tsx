@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAddInvoicePayment } from '../../hooks/use-invoice-payments'
 import type { PaymentMethod } from '../../types/invoice'
 import { formatCurrency } from '@/lib/utils/currency'
-import { getLocalDateString } from '@/lib/utils/date'
+import { getTorontoDateString } from '@/lib/utils/date'
 
 interface AddPaymentDialogProps {
     isOpen: boolean
@@ -42,7 +42,7 @@ export function AddPaymentDialog({
 }: AddPaymentDialogProps) {
     const [amount, setAmount] = useState<string>('')
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
-    const [paymentDate, setPaymentDate] = useState<string>(getLocalDateString())
+    const [paymentDate, setPaymentDate] = useState<string>(getTorontoDateString())
     const [paymentReference, setPaymentReference] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
     
@@ -52,7 +52,7 @@ export function AddPaymentDialog({
     useEffect(() => {
         if (isOpen) {
             // Always reset payment date to current date when dialog opens
-            setPaymentDate(getLocalDateString())
+            setPaymentDate(getTorontoDateString())
             
             // Auto-set amount to 0 for $0 invoices
             if (totalAmount === 0) {
@@ -94,7 +94,7 @@ export function AddPaymentDialog({
                 payment: {
                     amount: paymentAmount,
                     payment_method: paymentMethod as PaymentMethod,
-                    payment_date: new Date(paymentDate).toISOString(),
+                    payment_date: paymentDate,
                     payment_reference: paymentReference || null,
                     notes: notes || null,
                 }
@@ -103,7 +103,7 @@ export function AddPaymentDialog({
             // Reset form
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(getLocalDateString())
+            setPaymentDate(getTorontoDateString())
             setPaymentReference('')
             setNotes('')
             
@@ -118,7 +118,7 @@ export function AddPaymentDialog({
         if (!addPayment.isPending) {
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(getLocalDateString())
+            setPaymentDate(getTorontoDateString())
             setPaymentReference('')
             setNotes('')
             onClose()
