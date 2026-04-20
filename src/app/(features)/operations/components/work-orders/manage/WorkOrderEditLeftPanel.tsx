@@ -21,9 +21,8 @@ import { WorkOrderSendEmailModal } from '../shared/WorkOrderSendEmailModal'
 import { WorkOrderSendSmsModal } from '../shared/WorkOrderSendSmsModal'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
 import { workOrderService } from '../../../lib/work-order-service'
-import { downloadWorkOrderPDF } from '../../../lib/work-order-pdf-generator'
+import { WorkOrderPreviewModal } from '../shared/WorkOrderPreviewModal'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
-import { prepareShopBrandingWithLogo } from '../../../../financials/lib/pdf/logo-utils'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
@@ -132,25 +131,12 @@ export function WorkOrderEditLeftPanel({
     const [isSendChoiceOpen, setIsSendChoiceOpen] = useState(false)
     const [isSendEmailOpen, setIsSendEmailOpen] = useState(false)
     const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
-    const [isPrinting, setIsPrinting] = useState(false)
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const { data: shopInfo } = useShopInfo()
 
     const showSendPrint = SEND_PRINT_STATUSES.includes(workOrderDetails.status)
 
     const handleSend = () => setIsSendChoiceOpen(true)
-
-    const handlePrint = async () => {
-        if (!shopInfo) { toast.error('Shop information not available'); return }
-        setIsPrinting(true)
-        try {
-            const shop = await prepareShopBrandingWithLogo(shopInfo)
-            await downloadWorkOrderPDF(workOrderDetails, workOrderItems, shop)
-        } catch {
-            toast.error('Failed to generate PDF')
-        } finally {
-            setIsPrinting(false)
-        }
-    }
 
     const handleTechnicianSelect = (technicianId: string, technicianName: string) => {
         form.handleFieldChange('assignee', technicianName)
@@ -361,8 +347,8 @@ export function WorkOrderEditLeftPanel({
                 onClose={onClose}
                 onDelete={() => setShowDeleteConfirmation(true)}
                 onSend={showSendPrint ? handleSend : undefined}
-                onPrint={showSendPrint ? handlePrint : undefined}
-                isPrinting={isPrinting}
+                onPrint={showSendPrint ? () => setIsPreviewModalOpen(true) : undefined}
+                isPrinting={false}
             />
 
             {/* Send / Print Modals */}
@@ -386,6 +372,13 @@ export function WorkOrderEditLeftPanel({
                 isOpen={isSendSmsOpen}
                 onClose={() => setIsSendSmsOpen(false)}
                 onConfirm={() => setIsSendSmsOpen(false)}
+            />
+            <WorkOrderPreviewModal
+                workOrder={workOrderDetails}
+                workOrderItems={workOrderItems}
+                shopInfo={shopInfo}
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
             />
 
             {/* Delete Confirmation Dialog */}

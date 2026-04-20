@@ -4,16 +4,14 @@ import React, { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Wrench, Send, Download, ArchiveRestore } from 'lucide-react'
-import { toast } from 'sonner'
 import type { WorkOrderWithDetails } from '../../../types/work-order'
 import { useWorkOrderItems } from '../../../hooks/use-work-order-items'
 import { WorkOrderDetailContent, getWorkOrderStatusBadge, getWorkOrderPriorityBadge } from './WorkOrderDetailContent'
 import { WorkOrderSendChoiceModal } from './WorkOrderSendChoiceModal'
 import { WorkOrderSendEmailModal } from './WorkOrderSendEmailModal'
 import { WorkOrderSendSmsModal } from './WorkOrderSendSmsModal'
-import { downloadWorkOrderPDF } from '../../../lib/work-order-pdf-generator'
+import { WorkOrderPreviewModal } from './WorkOrderPreviewModal'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
-import { prepareShopBrandingWithLogo } from '../../../../financials/lib/pdf/logo-utils'
 
 const SEND_PRINT_STATUSES = ['pending', 'approved', 'waiting_parts', 'waiting_customer']
 
@@ -36,24 +34,11 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
     const [isSendChoiceOpen, setIsSendChoiceOpen] = useState(false)
     const [isSendEmailOpen, setIsSendEmailOpen] = useState(false)
     const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
-    const [isPrinting, setIsPrinting] = useState(false)
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
 
     if (!workOrder) return null
 
     const showSendPrint = SEND_PRINT_STATUSES.includes(workOrder.status)
-
-    const handlePrint = async () => {
-        if (!shopInfo) { toast.error('Shop information not available'); return }
-        setIsPrinting(true)
-        try {
-            const shop = await prepareShopBrandingWithLogo(shopInfo)
-            await downloadWorkOrderPDF(workOrder, workOrderItems as any, shop)
-        } catch {
-            toast.error('Failed to generate PDF')
-        } finally {
-            setIsPrinting(false)
-        }
-    }
 
     return (
         <>
@@ -113,11 +98,10 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                                     </Button>
                                     <Button
                                         className="bg-gray-600 hover:bg-gray-700 text-white"
-                                        onClick={handlePrint}
-                                        disabled={isPrinting}
+                                        onClick={() => setIsPreviewModalOpen(true)}
                                     >
                                         <Download className="h-4 w-4 mr-2" />
-                                        {isPrinting ? 'Generating...' : 'Print / PDF'}
+                                        Print / PDF
                                     </Button>
                                 </>
                             )}
@@ -147,6 +131,13 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                 isOpen={isSendSmsOpen}
                 onClose={() => setIsSendSmsOpen(false)}
                 onConfirm={() => setIsSendSmsOpen(false)}
+            />
+            <WorkOrderPreviewModal
+                workOrder={workOrder}
+                workOrderItems={workOrderItems as any}
+                shopInfo={shopInfo}
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
             />
         </>
     )
