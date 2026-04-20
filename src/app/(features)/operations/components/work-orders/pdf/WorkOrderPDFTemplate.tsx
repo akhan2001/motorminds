@@ -317,7 +317,7 @@ export const WorkOrderPDFTemplate: React.FC<WorkOrderPDFData> = ({ workOrder, wo
 
                 {/* ── Line Items Table ── */}
                 {billableItems.length > 0 && (
-                    <View style={styles.tableContainer}>
+                    <>
                         <Text style={[styles.sectionTitle, { marginBottom: 6 }]}>Services &amp; Parts</Text>
                         <View style={styles.tableHeader}>
                             <Text style={[styles.tableHeaderText, styles.colType]}>Type</Text>
@@ -331,7 +331,7 @@ export const WorkOrderPDFTemplate: React.FC<WorkOrderPDFData> = ({ workOrder, wo
                             const qty = isLabor ? (item.labor_hours || 0) : (item.quantity || 0)
                             const itemTotal = qty * (item.unit_price || 0)
                             return (
-                                <View key={item.id || index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
+                                <View key={item.id || index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}, index === billableItems.length - 1 ? { marginBottom: 16 } : {}]}>
                                     <Text style={[styles.tableCell, styles.colType]}>
                                         {item.item_type.charAt(0).toUpperCase() + item.item_type.slice(1)}
                                     </Text>
@@ -342,12 +342,12 @@ export const WorkOrderPDFTemplate: React.FC<WorkOrderPDFData> = ({ workOrder, wo
                                 </View>
                             )
                         })}
-                    </View>
+                    </>
                 )}
 
                 {/* ── Totals ── */}
                 {billableItems.length > 0 && (
-                    <View style={styles.totalsContainer}>
+                    <View style={styles.totalsContainer} wrap={false}>
                         <View style={styles.totalsRow}>
                             <Text style={styles.totalsLabel}>Subtotal</Text>
                             <Text style={styles.totalsValue}>{formatCurrency(subtotal)}</Text>
@@ -366,7 +366,7 @@ export const WorkOrderPDFTemplate: React.FC<WorkOrderPDFData> = ({ workOrder, wo
 
                 {/* ── Technician Notes ── */}
                 {workOrder.notes && (
-                    <View style={styles.notesBox}>
+                    <View style={styles.notesBox} wrap={false}>
                         <Text style={styles.sectionTitle}>Technician Notes</Text>
                         <Text style={styles.notesText}>{workOrder.notes}</Text>
                     </View>
