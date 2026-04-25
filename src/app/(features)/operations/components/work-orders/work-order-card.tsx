@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Calendar, Palette } from 'lucide-react'
-import { truncateText, getInitials } from '@/lib/utils/text'
+import { truncateText, getInitials, stripNullTokens } from '@/lib/utils/text'
 import { getPriorityColor } from '@/lib/utils/status'
 import { WorkOrderKanbanItem } from '../../types/work-order'
 import {
@@ -155,26 +155,26 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                         {/* Vehicle Details - First - Most Prominent (Highest Weight & Brightest Color) */}
-                        {item.vehicle && (
+                        {stripNullTokens(item.vehicle) && (
                             <div className="text-sm font-medium text-foreground dark:text-white mb-1">
-                                {item.vehicle}
+                                {stripNullTokens(item.vehicle)}
                             </div>
                         )}
-                        
+
                         {/* Customer Info - Second - Medium Prominence */}
-                        {item.customer && (
+                        {stripNullTokens(item.customer) && (
                             <div className="text-xs text-foreground dark:text-gray-300 font-medium mb-1">
-                                {item.customer}
-                                {item.customer_phone && (
-                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(item.customer_phone)}</span>
+                                {stripNullTokens(item.customer)}
+                                {stripNullTokens(item.customer_phone) && (
+                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(stripNullTokens(item.customer_phone))}</span>
                                 )}
                             </div>
                         )}
-                        
+
                         {/* Title - Third - Less Prominent */}
                         <CardTitle className="text-xs font-medium text-foreground dark:text-gray-300 line-clamp-2">
-                            {item.title?.trim()
-                                ? truncateText(item.title, 50)
+                            {stripNullTokens(item.title)
+                                ? truncateText(stripNullTokens(item.title), 50)
                                 : 'Work Order'}
                         </CardTitle>
                         {/* Status Tracker Badges */}
@@ -285,13 +285,13 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
             </CardHeader>
             <CardContent className="pt-0">
                 {/* Labor / Services / Parts - Fourth */}
-                {item.first_item && (
+                {item.first_item && stripNullTokens(item.first_item.description) && (
                     <div className="mb-2">
-                        <Badge 
-                            variant="secondary" 
+                        <Badge
+                            variant="secondary"
                             className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a] capitalize"
                         >
-                            {item.first_item.item_type}: {truncateText(item.first_item.description, 40)}
+                            {item.first_item.item_type}: {truncateText(stripNullTokens(item.first_item.description), 40)}
                         </Badge>
                     </div>
                 )}
@@ -309,9 +309,9 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                     </div>
                 )}
                 
-                {item.description && (
+                {stripNullTokens(item.description) && (
                     <p className="text-xs text-muted-foreground dark:text-gray-400 line-clamp-2 mb-2">
-                        {truncateText(item.description, 80)}
+                        {truncateText(stripNullTokens(item.description), 80)}
                     </p>
                 )}
                 
