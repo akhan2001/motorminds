@@ -21,6 +21,7 @@ export interface InvoiceItem {
   original_work_order_item?: any | null
   invoice_specific_notes?: string | null
   invoice_specific_discount?: number | null
+  line_discount?: number | null
   warranty_period?: string | null
   active: boolean
   created_at: string

@@ -13,6 +13,8 @@ import { CustomerDropdown } from "@/app/(features)/customers/components/Selectio
 import { CustomerSearchBar } from "@/components/common/customers/customer-search-bar"
 import { VehicleSearchForCustomer } from "@/components/common/customers/vehicle-search-for-customer"
 import { CustomerService, type CustomerFormData } from "@/app/(features)/customers/lib/customer-service"
+import { VehicleService } from "@/app/(features)/customers/lib/vehicle-service"
+import type { VehicleOption } from "@/app/(features)/customers/types/vehicle"
 import { toast } from "sonner"
 import { Save, Loader2 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -28,6 +30,7 @@ export interface CustomerInformationProps {
     onFieldChange: (field: string, value: string) => void
     onCustomerChange?: (customerId: string) => void
     onCustomerSaved?: (customerId: string, customerData: any) => void
+    onVehicleSelect?: (vehicleId: string, vehicleData: VehicleOption) => void
     className?: string
 }
 
@@ -42,6 +45,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
     onFieldChange,
     onCustomerChange,
     onCustomerSaved,
+    onVehicleSelect,
     className = ""
 }) => {
     const { shopId } = useAuth()
@@ -236,13 +240,17 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                 <TabsContent value="vehicle" className="mt-3">
                                     <VehicleSearchForCustomer
                                         shopId={shopId}
-                                        onCustomerSelect={(customer) => {
+                                        onCustomerSelect={(customer, vehicle) => {
                                             // Handle customer selection from vehicle search
                                             onFieldChange('customer', customer.customer_name || '')
                                             onFieldChange('customerEmail', customer.customer_email || '')
                                             onFieldChange('customerPhone', customer.customer_phone || '')
                                             onFieldChange('customerAddress', customer.customer_address || '')
                                             onCustomerChange?.(customer.id)
+                                            // Auto-select the matched vehicle so the user doesn't have to pick it again
+                                            if (vehicle && onVehicleSelect) {
+                                                onVehicleSelect(vehicle.id, VehicleService.toVehicleOption(vehicle))
+                                            }
                                         }}
                                         placeholder="Search by license plate..."
                                         className="w-full"

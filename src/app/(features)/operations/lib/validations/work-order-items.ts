@@ -77,12 +77,12 @@ export const WorkOrderItemCreateSchema = z.object({
     quantity: z.number().positive().default(1),
     unit_price: z.number().nonnegative().default(0),
     unit_cost: z.number().nonnegative().optional().nullable(),
-    
+
     supplier: z.string().max(200).optional().nullable(),
     category: z.string().max(100).optional().nullable(),
     warranty_period: z.string().max(50).optional().nullable(),
     notes: z.string().max(1000).optional().nullable(),
-    
+
     labor_hours: z.number().positive().optional().nullable(),
     technician_id: z.preprocess(
         (val) => val === '' || val === null || val === undefined ? undefined : val,
@@ -126,7 +126,7 @@ export const WorkOrderItemUpdateSchema = z.object({
     quantity: z.number().positive().optional(),
     unit_price: z.number().nonnegative().optional(),
     unit_cost: z.number().nonnegative().optional().nullable(),
-    
+
     supplier: z.string().max(200).optional().nullable(),
     category: z.string().max(100).optional().nullable(),
     warranty_period: z.string().max(50).optional().nullable(),
@@ -172,16 +172,16 @@ export const WorkOrderItemFormDataSchema = z.object({
     item_type: WorkOrderItemTypeSchema,
     description: z.string().min(1).max(500),
     part_number: z.string().max(100).optional(),
-    
+
     quantity: z.number().positive().default(1),
     unit_price: z.number().nonnegative().default(0),
     unit_cost: z.number().nonnegative().optional(),
-    
+
     supplier: z.string().max(200).optional(),
     category: z.string().max(100).optional(),
     warranty_period: z.string().max(50).optional(),
     notes: z.string().max(1000).optional(),
-    
+
     labor_hours: z.number().positive().optional(),
     technician_id: z.string().uuid().optional(),
     active: z.boolean().optional(),

@@ -35,6 +35,7 @@ interface LaborFormItem {
     unit_price: number;
     total_price: number;
     unit_cost?: number;
+    line_discount?: number;
     category?: string;
     notes?: string;
     technician_id?: string;
@@ -68,6 +69,7 @@ export function WorkOrderLaborItems({
         quantity: 1, // Labor items typically have quantity of 1
         unit_price: item.unit_price,
         unit_cost: item.unit_cost || undefined,
+        line_discount: item.line_discount || 0,
         labor_hours: item.labor_hours,
         category: item.category || undefined,
         notes: item.notes || undefined,
@@ -99,13 +101,14 @@ export function WorkOrderLaborItems({
 
     
     const addItem = () => {
-        onItemsChange([...items, { 
-            id: uuidv4(), 
-            description: "", 
-            labor_hours: 1, 
+        onItemsChange([...items, {
+            id: uuidv4(),
+            description: "",
+            labor_hours: 1,
             unit_price: 0,
             total_price: 0,
             unit_cost: 0,
+            line_discount: 0,
             category: "",
             notes: "",
             technician_id: ""
@@ -145,29 +148,30 @@ export function WorkOrderLaborItems({
     const updateItem = (id: string, field: keyof LaborFormItem, value: string | number) => {
         const updatedItems = items.map(item => {
             if (item.id !== id) return item;
-            
+
             const updatedItem = { ...item };
-            
+
             // Convert string values to numbers for numeric fields
             if (field === 'labor_hours' || field === 'unit_price') {
                 const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
                 updatedItem[field] = numValue as number;
-            } else if (field === 'unit_cost') {
+            } else if (field === 'unit_cost' || field === 'line_discount') {
                 const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
                 updatedItem[field] = numValue as number;
             } else if (field === 'technician_id' || field === 'description' || field === 'notes' || field === 'category') {
                 updatedItem[field] = value as string;
             }
-            
-            // Calculate total price when hours or unit price changes
-            if (field === 'labor_hours' || field === 'unit_price') {
-                // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
-                updatedItem.total_price = updatedItem.labor_hours * updatedItem.unit_price;
+
+            // Recalculate total price when hours, unit price, or line discount changes
+            if (field === 'labor_hours' || field === 'unit_price' || field === 'line_discount') {
+                // NOTE: UI feedback only. Database triggers compute the authoritative total_price on save.
+                const gross = updatedItem.labor_hours * updatedItem.unit_price;
+                updatedItem.total_price = Math.max(0, gross - (updatedItem.line_discount || 0));
             }
-            
+
             return updatedItem;
         });
-        
+
         onItemsChange(updatedItems);
     };
 
@@ -296,12 +300,14 @@ export function WorkOrderLaborItems({
                                         onChange={(value) => updateItem(item.id, 'description', value)}
                                         onTemplateSelect={async (template: WorkOrderItemTemplate) => {
                                             // Create updated item with template data
+                                            const lineDiscount = item.line_discount || 0;
+                                            const grossTotal = (template.labor_hours || 1) * template.unit_price;
                                             const updatedItem = {
                                                 ...item,
                                                 description: template.name,
                                                 labor_hours: template.labor_hours || 1,
                                                 unit_price: template.unit_price,
-                                                total_price: (template.labor_hours || 1) * template.unit_price,
+                                                total_price: Math.max(0, grossTotal - lineDiscount),
                                                 unit_cost: template.unit_cost,
                                                 category: template.category || item.category,
                                                 notes: template.description || item.notes,
@@ -427,6 +433,31 @@ export function WorkOrderLaborItems({
                                             placeholder="e.g., engine, transmission"
                                         />
                                     </div>
+                                </div>
+
+                                {/* Line Discount */}
+                                <div>
+                                    <Label htmlFor={`labor_line_discount_${index}`} className="text-muted-foreground text-xs">
+                                        Line Discount ($, Optional)
+                                    </Label>
+                                    <Input
+                                        id={`labor_line_discount_${index}`}
+                                        type="number"
+                                        value={item.line_discount || ''}
+                                        onChange={(e) => updateItem(item.id, 'line_discount', e.target.value)}
+                                        className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing
+                                                ? 'bg-background dark:bg-[#1a1a1a]'
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
+                                        min="0"
+                                        step="0.01"
+                                        disabled={!isEditing}
+                                        placeholder="0.00"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Subtracted from this line's total before tax.
+                                    </p>
                                 </div>
 
                                 {/* Technician and Total */}

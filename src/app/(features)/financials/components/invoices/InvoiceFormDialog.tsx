@@ -187,16 +187,41 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         if (!shopId) {
             toast.error('Shop ID not found')
             return
         }
 
         try {
+            // Expand any inline `line_discount` on labor/service items into paired
+            // item_type='discount' rows. The labor/service item is saved without
+            // line_discount so the rest of the system never has to know about it.
+            const expandedItems: any[] = []
+            ;(formData.invoice_items || []).forEach((item: any) => {
+                const lineDiscount = Number(item.line_discount) || 0
+                const isExpandable = (item.item_type === 'labor' || item.item_type === 'service') && lineDiscount > 0
+                if (isExpandable) {
+                    const { line_discount, ...rest } = item
+                    expandedItems.push(rest)
+                    expandedItems.push({
+                        id: crypto.randomUUID(),
+                        item_type: 'discount',
+                        description: `Line discount: ${item.description || ''}`.slice(0, 500),
+                        quantity: 1,
+                        unit_price: lineDiscount,
+                        total_price: lineDiscount,
+                    })
+                } else {
+                    const { line_discount: _drop, ...rest } = item
+                    expandedItems.push(rest)
+                }
+            })
+
             // Ensure tax_rate is 0 if tax is disabled
             const finalFormData = {
                 ...formData,
+                invoice_items: expandedItems,
                 tax_rate: includeTax ? formData.tax_rate : 0
             }
             

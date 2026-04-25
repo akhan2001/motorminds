@@ -298,6 +298,17 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                     handleFieldChange('customerPhone', customerData.phone || '')
                                                     handleFieldChange('customerAddress', customerData.address || '')
                                                 }}
+                                                onVehicleSelect={(vehicleId, vehicleData) => {
+                                                    // Auto-select the vehicle when user picks via "Search by Vehicle".
+                                                    handleFieldChange('vehicleId', vehicleId)
+                                                    handleFieldChange('vehicleYear', vehicleData.year ? vehicleData.year.toString() : '')
+                                                    handleFieldChange('vehicleMake', vehicleData.make || '')
+                                                    handleFieldChange('vehicleModel', vehicleData.model || '')
+                                                    handleFieldChange('vehicleColor', vehicleData.color || '')
+                                                    handleFieldChange('vehicleVin', vehicleData.vin || '')
+                                                    handleFieldChange('vehicleLicensePlate', vehicleData.licensePlate || '')
+                                                    handleFieldChange('vehicle', `${vehicleData.year ?? ''} ${vehicleData.make ?? ''} ${vehicleData.model ?? ''}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`.trim())
+                                                }}
                                                 isCreating={true}
                                             />
                                         ) : (
