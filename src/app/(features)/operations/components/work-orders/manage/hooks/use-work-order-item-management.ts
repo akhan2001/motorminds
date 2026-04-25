@@ -314,13 +314,32 @@ export function useWorkOrderItemManagement({
             // Prepare all items for bulk upsert
             const itemsToUpsert: Array<{ id?: string; data: any }> = []
 
-            // Add all item types
+            // Add all item types.
+            // For labor/service rows that have an inline `line_discount`, emit
+            // a paired item_type='discount' row alongside it. The labor/service
+            // row itself is saved without any discount field; the discount lives
+            // in its own standard discount item.
+            const buildLineDiscountItem = (sourceDesc: string, amount: number) => ({
+                item_type: 'discount' as const,
+                description: `Line discount: ${sourceDesc}`.slice(0, 500),
+                quantity: 1,
+                unit_price: amount,
+                notes: null,
+            })
+
             laborItems.forEach(item => {
                 if (item.description.trim()) {
                     itemsToUpsert.push({
                         id: existingItemIds.has(item.id) ? item.id : undefined,
                         data: convertToWorkOrderItemFormData(item, 'labor'),
                     })
+                    const lineDiscount = Number((item as any).line_discount) || 0
+                    if (lineDiscount > 0) {
+                        itemsToUpsert.push({
+                            id: undefined, // always create a fresh discount row
+                            data: buildLineDiscountItem(item.description, lineDiscount),
+                        })
+                    }
                 }
             })
 
@@ -348,6 +367,13 @@ export function useWorkOrderItemManagement({
                         id: existingItemIds.has(item.id) ? item.id : undefined,
                         data: convertToWorkOrderItemFormData(item, 'service'),
                     })
+                    const lineDiscount = Number((item as any).line_discount) || 0
+                    if (lineDiscount > 0) {
+                        itemsToUpsert.push({
+                            id: undefined,
+                            data: buildLineDiscountItem(item.description, lineDiscount),
+                        })
+                    }
                 }
             })
 

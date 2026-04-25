@@ -44,16 +44,16 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		const total = (item.labor_hours || 0) * (item.unit_price || 0)
 		return sum + total
 	}, 0)
-	
+
 	const partsTotal = partsItems.reduce((sum, item) => {
 		// For parts: quantity * unit_price
 		const total = (item.quantity || 0) * (item.unit_price || 0)
 		return sum + total
 	}, 0)
-	
+
 	// Expenses are excluded from calculations (tracking only)
 	const expensesTotal = 0
-	
+
 	const servicesTotal = servicesItems.reduce((sum, item) => {
 		// For services: quantity * unit_price
 		const total = (item.quantity || 0) * (item.unit_price || 0)

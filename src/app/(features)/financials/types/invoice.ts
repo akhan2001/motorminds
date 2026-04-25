@@ -58,6 +58,7 @@ export interface InvoiceItem {
     warranty_period?: string
     labor_hours?: number
     technician_id?: string
+    line_discount?: number
 }
 
 export interface InvoiceWithDetails extends Invoice {

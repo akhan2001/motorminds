@@ -15,6 +15,7 @@ export interface LaborFormItem {
     unit_price: number
     total_price: number
     unit_cost?: number // Optional cost tracking
+    line_discount?: number // Optional flat-dollar discount on this line
     category?: string
     notes?: string
     technician_id?: string
@@ -82,6 +83,7 @@ export interface GenericFormItem {
     unit_price: number
     total_price: number
     unit_cost?: number // Optional cost tracking
+    line_discount?: number // Optional flat-dollar discount on this line (services only)
     category?: string
     labor_hours?: number // Optional for packages and services
     notes?: string

@@ -12,6 +12,7 @@ interface GenericFormItem {
     unit_price: number
     total_price: number
     unit_cost?: number
+    line_discount?: number
     category?: string
     labor_hours?: number
     notes?: string
@@ -57,6 +58,7 @@ export function InvoiceGenericItemsAdapter({
                 unit_price: item.unit_price,
                 total_price: item.total_price,
                 unit_cost: undefined,
+                line_discount: (item as any).line_discount || 0,
                 category: item.category || '',
                 labor_hours: item.labor_hours,
                 notes: ''
@@ -78,8 +80,9 @@ export function InvoiceGenericItemsAdapter({
             unit_price: item.unit_price,
             total_price: item.total_price,
             category: item.category || undefined,
-            labor_hours: item.labor_hours
-        }))
+            labor_hours: item.labor_hours,
+            line_discount: itemType === 'service' ? (item.line_discount || 0) : undefined,
+        } as InvoiceItem))
 
         // Merge back: other items + updated items of this type
         onItemsChange([...otherItems, ...updatedItems])

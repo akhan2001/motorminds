@@ -309,8 +309,8 @@ export class WorkOrderItemsService {
         if (validated.unit_price !== undefined) updatePayload.unit_price = validated.unit_price
         // Handle unit_cost: preserve 0, convert undefined to null, keep null as null
         if (validated.unit_cost !== undefined) {
-            updatePayload.unit_cost = validated.unit_cost !== null && validated.unit_cost !== undefined 
-                ? validated.unit_cost 
+            updatePayload.unit_cost = validated.unit_cost !== null && validated.unit_cost !== undefined
+                ? validated.unit_cost
                 : null
         }
         if (validated.supplier !== undefined) updatePayload.supplier = validated.supplier?.trim() || null

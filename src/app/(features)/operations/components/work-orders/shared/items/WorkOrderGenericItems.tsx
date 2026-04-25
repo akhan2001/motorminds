@@ -31,6 +31,7 @@ interface GenericFormItem {
     unit_price: number;
     total_price: number;
     unit_cost?: number;
+    line_discount?: number; // Optional flat-dollar discount on this line (services only)
     category?: string;
     labor_hours?: number; // For packages and services
     notes?: string;
@@ -75,6 +76,7 @@ export function WorkOrderGenericItems({
         quantity: item.quantity,
         unit_price: item.unit_price,
         unit_cost: item.unit_cost || undefined,
+        line_discount: itemType === 'service' ? (item.line_discount || 0) : 0,
         category: item.category || undefined,
         labor_hours: item.labor_hours || undefined,
         notes: item.notes || undefined,
@@ -104,13 +106,14 @@ export function WorkOrderGenericItems({
     };
 
     const addItem = () => {
-        onItemsChange([...items, { 
-            id: uuidv4(), 
-            description: "", 
+        onItemsChange([...items, {
+            id: uuidv4(),
+            description: "",
             quantity: 1,
             unit_price: 0,
             total_price: 0,
             unit_cost: 0,
+            line_discount: 0,
             category: "",
             labor_hours: 0,
             notes: ""
@@ -153,11 +156,11 @@ export function WorkOrderGenericItems({
             if (item.id === id) {
                 const updated = { ...item, [field]: value };
                 // Recalculate total
-                // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
-                if (field === 'quantity' || field === 'unit_price') {
-                    const quantity = field === 'quantity' ? (value || 0) : updated.quantity;
-                    const unitPrice = field === 'unit_price' ? (value || 0) : updated.unit_price;
-                    updated.total_price = quantity * unitPrice;
+                // NOTE: UI feedback only. The database trigger calculates the authoritative total_price on save.
+                if (field === 'quantity' || field === 'unit_price' || field === 'line_discount') {
+                    const gross = updated.quantity * updated.unit_price;
+                    const lineDiscount = itemType === 'service' ? (updated.line_discount || 0) : 0;
+                    updated.total_price = Math.max(0, gross - lineDiscount);
                 }
                 return updated;
             }
@@ -328,12 +331,14 @@ export function WorkOrderGenericItems({
                                             // For discounts, store as positive values (will be subtracted in calculations)
                                             let unitPrice = Math.abs(template.unit_price || 0);
 
+                                            const lineDiscount = itemType === 'service' ? (item.line_discount || 0) : 0;
+                                            const grossTotal = template.quantity * unitPrice;
                                             const updatedItem = {
                                                 ...item,
                                                 description: template.name,
                                                 quantity: template.quantity,
                                                 unit_price: unitPrice,
-                                                total_price: template.quantity * unitPrice,
+                                                total_price: Math.max(0, grossTotal - lineDiscount),
                                                 unit_cost: template.unit_cost,
                                                 category: template.category || item.category,
                                                 labor_hours: template.labor_hours || item.labor_hours,
@@ -463,12 +468,36 @@ export function WorkOrderGenericItems({
                                             step="0.25"
                                             className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
                                             isEditing && !readOnly
-                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                ? 'bg-background dark:bg-[#1a1a1a]'
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
                                             disabled={!isEditing || readOnly}
                                             placeholder="0.00"
                                         />
+                                    </div>
+                                )}
+
+                                {/* Line Discount field — services only */}
+                                {itemType === 'service' && (
+                                    <div className="md:col-span-2">
+                                        <Label className="text-muted-foreground text-xs">Line Discount ($, Optional)</Label>
+                                        <Input
+                                            type="number"
+                                            value={item.line_discount || ''}
+                                            onChange={(e) => updateItem(item.id, 'line_discount', parseFloat(e.target.value) || 0)}
+                                            min="0"
+                                            step="0.01"
+                                            className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                                isEditing && !readOnly
+                                                    ? 'bg-background dark:bg-[#1a1a1a]'
+                                                    : 'bg-card dark:bg-[#131313]'
+                                            }`}
+                                            disabled={!isEditing || readOnly}
+                                            placeholder="0.00"
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Subtracted from this line's total before tax.
+                                        </p>
                                     </div>
                                 )}
 

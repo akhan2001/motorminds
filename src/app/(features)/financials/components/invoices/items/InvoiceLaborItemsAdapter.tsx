@@ -12,6 +12,7 @@ interface LaborFormItem {
     unit_price: number
     total_price: number
     unit_cost?: number
+    line_discount?: number
     category?: string
     notes?: string
     technician_id?: string
@@ -51,6 +52,7 @@ export function InvoiceLaborItemsAdapter({
                 unit_price: item.unit_price,
                 total_price: item.total_price,
                 unit_cost: undefined, // Invoice items don't have unit_cost
+                line_discount: (item as any).line_discount || 0,
                 category: item.category || '',
                 notes: '',
                 technician_id: item.technician_id || ''
@@ -73,8 +75,9 @@ export function InvoiceLaborItemsAdapter({
             total_price: item.total_price,
             labor_hours: item.labor_hours,
             technician_id: item.technician_id || undefined,
-            category: item.category || undefined
-        }))
+            category: item.category || undefined,
+            line_discount: item.line_discount || 0,
+        } as InvoiceItem))
 
         // Merge back: non-labor items + updated labor items
         onItemsChange([...nonLaborItems, ...updatedLaborItems])
