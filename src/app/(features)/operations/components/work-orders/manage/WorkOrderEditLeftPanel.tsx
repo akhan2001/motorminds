@@ -229,6 +229,19 @@ export function WorkOrderEditLeftPanel({
                                 form.handleFieldChange('vehicleMileage', '')
                             }
                         }}
+                        onVehicleSelect={(vehicleId, vehicleData) => {
+                            // Auto-select the vehicle when user picks via "Search by Vehicle".
+                            // Runs after onCustomerChange in the same handler tick, so the field clears
+                            // from the customer-changed branch are overwritten here.
+                            setSelectedVehicleId(vehicleId)
+                            form.handleFieldChange('vehicleYear', vehicleData.year ? vehicleData.year.toString() : '')
+                            form.handleFieldChange('vehicleMake', vehicleData.make || '')
+                            form.handleFieldChange('vehicleModel', vehicleData.model || '')
+                            form.handleFieldChange('vehicleColor', vehicleData.color || '')
+                            form.handleFieldChange('vehicleVin', vehicleData.vin || '')
+                            form.handleFieldChange('vehicleLicensePlate', vehicleData.licensePlate || '')
+                            form.handleFieldChange('vehicle', `${vehicleData.year ?? ''} ${vehicleData.make ?? ''} ${vehicleData.model ?? ''}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`.trim())
+                        }}
                     />
 
                     {/* Vehicle Information */}

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Search, Loader2, Car, User, ChevronDown } from 'lucide-react'
 import { useDebouncedVehicleSearch } from '@/hooks/use-vehicle-search'
 import { Customer } from '@/app/(features)/customers/types'
+import { CustomerVehicle } from '@/app/(features)/customers/types/vehicle'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/utils/text'
@@ -14,7 +15,7 @@ import { cn } from '@/lib/utils'
 
 interface VehicleSearchForCustomerProps {
     shopId: string
-    onCustomerSelect: (customer: Customer) => void
+    onCustomerSelect: (customer: Customer, vehicle?: CustomerVehicle) => void
     placeholder?: string
     className?: string
     disabled?: boolean
@@ -50,30 +51,19 @@ export function VehicleSearchForCustomer({
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // Extract customers from vehicle search results (deduplicate by customer ID)
-    const customersFromVehicles = React.useMemo(() => {
+    // One row per matching vehicle so the user can pick the exact plate they searched for
+    const vehicleMatches = React.useMemo(() => {
         if (!searchResults) return []
-        
-        const customerMap = new Map<string, any>()
-        
-        searchResults
-            .filter((vehicle: any) => vehicle.customer_id && vehicle.customers)
-            .forEach((vehicle: any) => {
-                const customerId = vehicle.customers.id
-                if (!customerMap.has(customerId)) {
-                    customerMap.set(customerId, {
-                        ...vehicle.customers,
-                        vehicle: {
-                            year: vehicle.year,
-                            make: vehicle.make,
-                            model: vehicle.model,
-                            license_plate: vehicle.license_plate
-                        }
-                    })
+
+        return searchResults
+            .filter((row: any) => row.customer_id && row.customers)
+            .map((row: any) => {
+                const { customers, ...vehicleFields } = row
+                return {
+                    customer: customers as Customer,
+                    vehicle: vehicleFields as CustomerVehicle,
                 }
             })
-        
-        return Array.from(customerMap.values())
     }, [searchResults])
 
     const handleInputChange = (value: string) => {
@@ -85,10 +75,8 @@ export function VehicleSearchForCustomer({
         }
     }
 
-    const handleCustomerSelect = (customer: Customer & { vehicle?: any }) => {
-        // Extract just the customer data (without vehicle)
-        const { vehicle, ...customerData } = customer
-        onCustomerSelect(customerData as Customer)
+    const handleMatchSelect = (customer: Customer, vehicle: CustomerVehicle) => {
+        onCustomerSelect(customer, vehicle)
         setSearchQuery('')
         setOpen(false)
     }
@@ -139,17 +127,17 @@ export function VehicleSearchForCustomer({
                                     Searching...
                                 </div>
                             )}
-                            {!isSearching && customersFromVehicles.length === 0 && searchQuery.trim() && (
+                            {!isSearching && vehicleMatches.length === 0 && searchQuery.trim() && (
                                 <div className="p-4 text-center text-sm text-muted-foreground">
-                                    No customers found with this license plate.
+                                    No vehicles found with this license plate.
                                 </div>
                             )}
-                            {customersFromVehicles.length > 0 && (
+                            {vehicleMatches.length > 0 && (
                                 <div className="space-y-1">
-                                    {customersFromVehicles.map((customer: any) => (
+                                    {vehicleMatches.map(({ customer, vehicle }) => (
                                         <div
-                                            key={customer.id}
-                                            onClick={() => handleCustomerSelect(customer)}
+                                            key={vehicle.id}
+                                            onClick={() => handleMatchSelect(customer, vehicle)}
                                             className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 text-foreground transition-colors"
                                         >
                                             <Avatar className="h-8 w-8">
@@ -166,15 +154,13 @@ export function VehicleSearchForCustomer({
                                                     {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}
                                                     {customer.customer_email && customer.customer_email != 'NULL' ? ` • ${customer.customer_email}` : ''}
                                                 </div>
-                                                {customer.vehicle && (
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                                        <Car className="h-3 w-3" />
-                                                        <span>
-                                                            {customer.vehicle.year} {customer.vehicle.make} {customer.vehicle.model} 
-                                                            {' '}({customer.vehicle.license_plate})
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                                    <Car className="h-3 w-3" />
+                                                    <span>
+                                                        {vehicle.year} {vehicle.make} {vehicle.model}
+                                                        {vehicle.license_plate ? ` (${vehicle.license_plate})` : ''}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
