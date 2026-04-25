@@ -30,6 +30,22 @@ export function truncateText(text: string, maxLength: number): string {
 }
 
 /**
+ * Drop literal "null" / "NULL" / "Null" tokens from a string and collapse the
+ * surrounding whitespace. Imported/staging data sometimes lands these as
+ * strings rather than real nulls; truthy checks at the call site then leak
+ * them into the UI. Returns "" when nothing usable remains so `value && ...`
+ * branches hide the line entirely.
+ */
+export function stripNullTokens(value: string | null | undefined): string {
+    if (!value) return ''
+    return value
+        .replace(/\(\s*null\s*\)/gi, '')
+        .replace(/\bnull\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
+/**
  * Capitalize first letter of each word
  */
 export function titleCase(text: string): string {

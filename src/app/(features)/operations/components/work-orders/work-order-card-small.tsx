@@ -4,7 +4,7 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from 'lucide-react'
-import { truncateText, getInitials } from '@/lib/utils/text'
+import { truncateText, getInitials, stripNullTokens } from '@/lib/utils/text'
 import { getPriorityColor } from '@/lib/utils/status'
 import { WorkOrderKanbanItem } from '../../types/work-order'
 
@@ -29,35 +29,37 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0 pr-1">
                         {/* Vehicle Details - First - Most Prominent (Highest Weight & Brightest Color) */}
-                        {item.vehicle && (
+                        {stripNullTokens(item.vehicle) && (
                             <div className="text-xs font-semibold text-foreground dark:text-white truncate mb-0.5">
-                                {truncateText(item.vehicle, 28)}
+                                {truncateText(stripNullTokens(item.vehicle), 28)}
                             </div>
                         )}
-                        
+
                         {/* Customer Info - Second - Medium Prominence */}
-                        {item.customer && (
+                        {stripNullTokens(item.customer) && (
                             <div className="text-xs text-foreground dark:text-gray-300 truncate mb-0.5 font-medium">
-                                {truncateText(item.customer, 28)}
+                                {truncateText(stripNullTokens(item.customer), 28)}
                             </div>
                         )}
-                        
+
                         {/* Title - Third - Less Prominent */}
-                        <h4 className="text-xs font-medium text-foreground dark:text-gray-300 truncate">
-                            {truncateText(item.title, 30)}
-                        </h4>
+                        {stripNullTokens(item.title) && (
+                            <h4 className="text-xs font-medium text-foreground dark:text-gray-300 truncate">
+                                {truncateText(stripNullTokens(item.title), 30)}
+                            </h4>
+                        )}
                     </div>
                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(item.priority)} flex-shrink-0 mt-0.5`} />
                 </div>
 
                 {/* Labor / Services / Parts - Fourth */}
-                {item.first_item && (
+                {item.first_item && stripNullTokens(item.first_item.description) && (
                     <div className="mb-2">
-                        <Badge 
-                            variant="secondary" 
+                        <Badge
+                            variant="secondary"
                             className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a] capitalize"
                         >
-                            {item.first_item.item_type}: {truncateText(item.first_item.description, 25)}
+                            {item.first_item.item_type}: {truncateText(stripNullTokens(item.first_item.description), 25)}
                         </Badge>
                     </div>
                 )}
@@ -78,12 +80,12 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
                 {/* Bottom Row */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
                     <div className="flex items-center gap-2">
-                        {item.assignee && (
+                        {stripNullTokens(item.assignee) && (
                             <div className="flex items-center gap-1">
                                 <div className="w-3 h-3 bg-secondary dark:bg-[#444] rounded-full flex items-center justify-center text-xs text-secondary-foreground dark:text-white">
-                                    {getInitials(item.assignee)}
+                                    {getInitials(stripNullTokens(item.assignee))}
                                 </div>
-                                <span className="truncate max-w-[60px]">{truncateText(item.assignee, 8)}</span>
+                                <span className="truncate max-w-[60px]">{truncateText(stripNullTokens(item.assignee), 8)}</span>
                             </div>
                         )}
                     </div>

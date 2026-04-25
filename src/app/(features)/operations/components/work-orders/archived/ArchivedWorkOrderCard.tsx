@@ -7,6 +7,7 @@ import { Archive } from 'lucide-react'
 import type { WorkOrderWithDetails } from '../../../types/work-order'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { stripNullTokens } from '@/lib/utils/text'
 
 interface ArchivedWorkOrderCardProps {
     workOrder: WorkOrderWithDetails
@@ -24,6 +25,15 @@ export const ArchivedWorkOrderCard: React.FC<ArchivedWorkOrderCardProps> = ({ wo
         }
     }
 
+    const titleClean = stripNullTokens(workOrder.title)
+    const customerNameClean = stripNullTokens(workOrder.customer?.customer_name)
+    const customerEmailClean = stripNullTokens(workOrder.customer?.customer_email)
+    const vehicleLineClean = workOrder.vehicle
+        ? stripNullTokens(`${workOrder.vehicle.year ?? ''} ${workOrder.vehicle.make ?? ''} ${workOrder.vehicle.model ?? ''}`)
+        : ''
+    const licensePlateClean = stripNullTokens(workOrder.vehicle?.license_plate)
+    const archivedByEmailClean = stripNullTokens(workOrder.archived_by_user?.email)
+
     return (
         <Card
             className={cn(
@@ -39,7 +49,7 @@ export const ArchivedWorkOrderCard: React.FC<ArchivedWorkOrderCardProps> = ({ wo
                     <Archive className="h-3.5 w-3.5 text-muted-foreground dark:text-gray-500" />
                     <div>
                         <h3 className="text-sm font-medium text-foreground dark:text-white">
-                            {workOrder.title || 'Untitled Work Order'}
+                            {titleClean || 'Untitled Work Order'}
                         </h3>
                         <p className="text-xs text-muted-foreground dark:text-gray-400">#{workOrder.work_order_number}</p>
                     </div>
@@ -59,21 +69,21 @@ export const ArchivedWorkOrderCard: React.FC<ArchivedWorkOrderCardProps> = ({ wo
                 {/* Customer Info */}
                 <div>
                     <p className="text-xs uppercase mb-0.5 text-muted-foreground dark:text-gray-400">CUSTOMER</p>
-                    <p className="text-xs font-medium text-foreground dark:text-white">{workOrder.customer?.customer_name || 'Unknown'}</p>
-                    {workOrder.customer?.customer_email && (
-                        <p className="text-xs text-muted-foreground dark:text-gray-400">{workOrder.customer.customer_email}</p>
+                    <p className="text-xs font-medium text-foreground dark:text-white">{customerNameClean || 'Unknown'}</p>
+                    {customerEmailClean && (
+                        <p className="text-xs text-muted-foreground dark:text-gray-400">{customerEmailClean}</p>
                     )}
                 </div>
 
                 {/* Vehicle Info */}
-                {workOrder.vehicle && (
+                {vehicleLineClean && (
                     <div>
                         <p className="text-xs uppercase mb-0.5 text-muted-foreground dark:text-gray-400">VEHICLE</p>
                         <p className="text-xs font-medium text-foreground dark:text-white">
-                            {workOrder.vehicle.year} {workOrder.vehicle.make} {workOrder.vehicle.model}
+                            {vehicleLineClean}
                         </p>
-                        {workOrder.vehicle.license_plate && (
-                            <p className="text-xs text-muted-foreground dark:text-gray-400">Plate: {workOrder.vehicle.license_plate}</p>
+                        {licensePlateClean && (
+                            <p className="text-xs text-muted-foreground dark:text-gray-400">Plate: {licensePlateClean}</p>
                         )}
                     </div>
                 )}
@@ -86,8 +96,8 @@ export const ArchivedWorkOrderCard: React.FC<ArchivedWorkOrderCardProps> = ({ wo
                     <p className="text-sm font-medium text-foreground dark:text-white">
                         {workOrder.archived_at ? format(new Date(workOrder.archived_at), 'MMM dd, yyyy') : 'Unknown'}
                     </p>
-                    {workOrder.archived_by_user?.email && (
-                        <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">by {workOrder.archived_by_user.email}</p>
+                    {archivedByEmailClean && (
+                        <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">by {archivedByEmailClean}</p>
                     )}
                 </div>
             </div>
