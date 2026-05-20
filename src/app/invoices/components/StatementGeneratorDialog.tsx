@@ -3,7 +3,10 @@ import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { FileText, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { FileText, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getCustomers } from "@/app/customers/api/customer-utils";
@@ -166,7 +169,7 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white dark:bg-background text-foreground border border-border rounded-lg shadow-lg p-0 max-w-2xl">
+            <DialogContent className="bg-white dark:bg-card text-foreground border border-border rounded-lg shadow-lg p-0 max-w-2xl">
                 <DialogHeader className="p-6 border-b border-border bg-slate-50 dark:bg-card">
                     <div className="flex items-center gap-3">
                         <FileText className="h-6 w-6 text-blue-600 dark:text-blue-500" />
@@ -179,15 +182,15 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                     </div>
                 </DialogHeader>
 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 bg-slate-50 dark:bg-card">
                     {/* Customer Selection */}
                     <div className="space-y-2">
                         <label className="text-muted-foreground text-sm font-medium">Customer</label>
                         <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                            <SelectTrigger className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
+                            <SelectTrigger className="bg-white dark:bg-card text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
                                 <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-background text-foreground border-border">
+                            <SelectContent className="bg-white dark:bg-card text-foreground border-border">
                                 {customers.map((customer) => (
                                     <SelectItem key={customer.id} value={customer.id}>
                                         {customer.customer_name}
@@ -204,10 +207,10 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                     <div className="space-y-2">
                         <label className="text-muted-foreground text-sm font-medium">Date Range</label>
                         <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                            <SelectTrigger className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
+                            <SelectTrigger className="bg-white dark:bg-card text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
                                 <SelectValue placeholder="Select date range" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-background text-foreground border-border">
+                            <SelectContent className="bg-white dark:bg-card text-foreground border-border">
                                 {datePresets.map((preset) => (
                                     <SelectItem 
                                         key={preset.label} 
@@ -240,7 +243,7 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                                     type="date"
                                     value={customStartDate ? format(customStartDate, "yyyy-MM-dd") : ""}
                                     onChange={(e) => setCustomStartDate(e.target.value ? new Date(e.target.value) : undefined)}
-                                    className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
+                                    className="bg-white dark:bg-card text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
                                 />
                             </div>
 
@@ -251,7 +254,7 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                                     type="date"
                                     value={customEndDate ? format(customEndDate, "yyyy-MM-dd") : ""}
                                     onChange={(e) => setCustomEndDate(e.target.value ? new Date(e.target.value) : undefined)}
-                                    className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
+                                    className="bg-white dark:bg-card text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
                                 />
                             </div>
                         </div>
