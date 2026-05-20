@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getShopLogoUrl } from "@/app/(features)/financials/lib/pdf/logo-utils";
 
 // Fetch all invoices from the database with improved error handling and performance
 export async function fetchAllInvoices(shopId: string) {
@@ -66,29 +67,36 @@ export function calculateTotalWithTax(amount: number, taxRate: number): number {
 export async function fetchShopBusinessDetails(shopId: string) {
 	if (!shopId) {
 		console.error('No shop ID provided for fetchShopBusinessDetails');
-		return { hst_number: '', business_number: '' };
+		return { hst_number: '', business_number: '', shop_tagline: '', shop_logo: '', shop_name: '', shop_address: '', shop_email: '', shop_phone: '' };
 	}
 	
 	try {
 		const { data, error } = await supabase
 			.from('shops')
-			.select('hst_number, business_number, shop_tagline')
+			.select('hst_number, business_number, shop_tagline, shop_name, shop_address, shop_email, shop_phone')
 			.eq('id', shopId)
 			.single();
-		
+
 		if (error) {
 			console.error('Error fetching business details:', error);
-			return { hst_number: '', business_number: '' };
+			return { hst_number: '', business_number: '', shop_tagline: '', shop_logo: '', shop_name: '', shop_address: '', shop_email: '', shop_phone: '' };
 		}
-		
+
+		const shop_logo = (await getShopLogoUrl(shopId)) || '';
+
 		return {
 			hst_number: data?.hst_number || '',
 			business_number: data?.business_number || '',
-			shop_tagline: data?.shop_tagline || ''
+			shop_tagline: data?.shop_tagline || '',
+			shop_logo,
+			shop_name: data?.shop_name || '',
+			shop_address: data?.shop_address || '',
+			shop_email: data?.shop_email || '',
+			shop_phone: data?.shop_phone || ''
 		};
 	} catch (err) {
 		console.error('Error in fetchShopBusinessDetails:', err);
-		return { hst_number: '', business_number: '', shop_tagline: '' };
+		return { hst_number: '', business_number: '', shop_tagline: '', shop_logo: '', shop_name: '', shop_address: '', shop_email: '', shop_phone: '' };
 	}
 }
 

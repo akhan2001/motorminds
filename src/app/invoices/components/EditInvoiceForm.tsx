@@ -12,7 +12,11 @@ import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { InvoiceLineItems } from "./form-sections/InvoiceLineItems";
-import { MinusIcon, PlusIcon, X } from "lucide-react";
+import { MinusIcon, PlusIcon, X, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { CustomerInformation } from "@/app/(features)/operations/components/work-orders/shared/customer-information";
@@ -570,7 +574,7 @@ export default function  EditInvoiceForm({
 
     return (
         <Dialog open={isOpen}>
-            <DialogContent className="bg-white dark:bg-background text-foreground border border-border rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
+            <DialogContent className="bg-white dark:bg-card text-foreground border border-border rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
                 {/* Sticky Header */}
                 <DialogHeader className="sticky top-0 bg-slate-50 dark:bg-card z-10 p-4 sm:p-6 border-b border-border rounded-t-lg">
                     <div className="flex items-center justify-between">
@@ -606,7 +610,7 @@ export default function  EditInvoiceForm({
                                 id="shopName"
                                 value={shopName}
                                 disabled
-                                className="bg-white dark:bg-background text-foreground border-border"
+                                className="bg-white dark:bg-card text-foreground border-border"
                             />
                         </div>
                         <div>
@@ -615,7 +619,7 @@ export default function  EditInvoiceForm({
                                 id="shopAddress"
                                 value={shopAddress}
                                 disabled
-                                className="bg-white dark:bg-background text-foreground border-border"
+                                className="bg-white dark:bg-card text-foreground border-border"
                             />
                         </div>
                         <div>
@@ -624,7 +628,7 @@ export default function  EditInvoiceForm({
                                 id="shopEmail"
                                 value={shopEmail}
                                 disabled
-                                className="bg-white dark:bg-background text-foreground border-border"
+                                className="bg-white dark:bg-card text-foreground border-border"
                             />
                         </div>
                         <div>
@@ -633,7 +637,7 @@ export default function  EditInvoiceForm({
                                 id="shopPhone"
                                 value={formatPhoneNumber(shopPhone)}
                                 disabled
-                                className="bg-white dark:bg-background text-foreground border-border"
+                                className="bg-white dark:bg-card text-foreground border-border"
                             />
                         </div>
                     </div>
@@ -679,7 +683,7 @@ export default function  EditInvoiceForm({
                     <div className="space-y-3 bg-slate-50 dark:bg-card rounded-xl p-6 border border-border">
                         <label className="text-muted-foreground text-sm font-medium mb-1 block">Invoice Date</label>
                         <Input
-                            className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500"
+                            className="bg-white dark:bg-card text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500"
                             type="date"
                             value={invoiceDate}
                             onChange={(e) => setInvoiceDate(e.target.value)}
@@ -690,7 +694,7 @@ export default function  EditInvoiceForm({
                             <label className="text-muted-foreground text-sm self-center sm:col-span-1">Title</label>
                             <div className="sm:col-span-3">
                                 <Input
-                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
+                                    className="bg-white dark:bg-card text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter a title for the invoice"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -701,7 +705,7 @@ export default function  EditInvoiceForm({
                             <label className="text-muted-foreground text-sm self-center sm:col-span-1">PO Number</label>
                             <div className="sm:col-span-3">
                                 <Input
-                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
+                                    className="bg-white dark:bg-card text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter PO number (optional)"
                                     value={poNumber}
                                     onChange={(e) => setPoNumber(e.target.value)}
@@ -721,10 +725,10 @@ export default function  EditInvoiceForm({
                                     value={assignedTo}
                                     onValueChange={handleAssignedToChange}
                                 >
-                                    <SelectTrigger className="bg-white dark:bg-background border-border text-foreground w-full">
+                                    <SelectTrigger className="bg-white dark:bg-card border-border text-foreground w-full">
                                         <SelectValue placeholder="Select a staff member" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white dark:bg-background border-border text-foreground">
+                                    <SelectContent className="bg-white dark:bg-card border-border text-foreground">
                                         <SelectItem value="none">
                                             Unassigned
                                         </SelectItem>
@@ -747,7 +751,7 @@ export default function  EditInvoiceForm({
                             <label className="text-muted-foreground text-sm self-center sm:col-span-1">Notes</label>
                             <div className="sm:col-span-3">
                                 <Textarea
-                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
+                                    className="bg-white dark:bg-card text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter any notes"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
