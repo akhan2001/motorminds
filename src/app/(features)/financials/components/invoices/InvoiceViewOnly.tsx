@@ -370,21 +370,35 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                     <h3 className="text-lg font-semibold text-foreground dark:text-white">Vehicle Information</h3>
                                 </div>
                                 {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
-                                    <p className="text-foreground dark:text-white">
-                                        {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
-                                        {invoice.walk_in_vehicle_info.license_plate
-                                            ? ` - ${invoice.walk_in_vehicle_info.license_plate}`
-                                            : ''
-                                        }
-                                    </p>
+                                    <>
+                                        <p className="text-foreground dark:text-white">
+                                            {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                            {invoice.walk_in_vehicle_info.license_plate
+                                                ? ` - ${invoice.walk_in_vehicle_info.license_plate}`
+                                                : ''
+                                            }
+                                        </p>
+                                        {invoice.walk_in_vehicle_info.mileage != null && `${invoice.walk_in_vehicle_info.mileage}`.trim() !== '' && (
+                                            <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                                                Mileage: {invoice.walk_in_vehicle_info.mileage}
+                                            </p>
+                                        )}
+                                    </>
                                 ) : invoice.vehicle ? (
-                                    <p className="text-foreground dark:text-white">
-                                        {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                                        {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL'
-                                            ? ` - ${invoice.vehicle.license_plate}`
-                                            : ''
-                                        }
-                                    </p>
+                                    <>
+                                        <p className="text-foreground dark:text-white">
+                                            {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                            {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL'
+                                                ? ` - ${invoice.vehicle.license_plate}`
+                                                : ''
+                                            }
+                                        </p>
+                                        {invoice.vehicle.mileage != null && (
+                                            <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                                                Mileage: {invoice.vehicle.mileage.toLocaleString()}
+                                            </p>
+                                        )}
+                                    </>
                                 ) : null}
                             </div>
                         </Card>

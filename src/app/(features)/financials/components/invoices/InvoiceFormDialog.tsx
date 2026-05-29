@@ -68,7 +68,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
         make: '',
         model: '',
         licensePlate: '',
-        vin: ''
+        vin: '',
+        mileage: ''
     })
 
     // State for work order items
@@ -179,7 +180,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                     make: invoice.vehicle.make || '',
                     model: invoice.vehicle.model || '',
                     licensePlate: invoice.vehicle.license_plate || '',
-                    vin: (invoice.vehicle as any).vin || ''
+                    vin: (invoice.vehicle as any).vin || '',
+                    mileage: invoice.vehicle.mileage != null ? invoice.vehicle.mileage.toString() : ''
                 })
             }
         }
@@ -524,7 +526,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                         vehicleColor=""
                                         vehicleVin={vehicleInfo.vin}
                                         vehicleLicensePlate={vehicleInfo.licensePlate}
-                                        vehicleMileage=""
+                                        vehicleMileage={vehicleInfo.mileage}
                                         isEditing={true}
                                         isCreating={!invoiceId}
                                         onFieldChange={(field, value) => {
@@ -533,6 +535,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                             if (field === 'vehicleModel') setVehicleInfo(prev => ({ ...prev, model: value }))
                                             if (field === 'vehicleVin') setVehicleInfo(prev => ({ ...prev, vin: value }))
                                             if (field === 'vehicleLicensePlate') setVehicleInfo(prev => ({ ...prev, licensePlate: value }))
+                                            if (field === 'vehicleMileage') setVehicleInfo(prev => ({ ...prev, mileage: value }))
                                         }}
                                         onVehicleSelect={(vehicleId) => setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))}
                                     />
