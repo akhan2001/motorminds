@@ -77,3 +77,5 @@ src/app/(features)/operations/mock-work-orders.json
 
 # Invoice preview page (hidden from users)
 src/app/(features)/financials/invoices/preview/
+# Exported shop data (contains customer PII)
+scripts/exports/
