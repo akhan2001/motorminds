@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +15,14 @@ import { useArchivedInvoice } from '../../../hooks/use-archived-invoices'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils/currency'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { useTemplatePreference } from '../../../hooks/use-template-preference'
+
+// Lazy load the PDF preview - keeps @react-pdf/renderer out of this bundle until the user asks for it
+const InvoicePreviewModal = dynamic(
+    () => import('../InvoicePreviewModal').then(m => ({ default: m.InvoicePreviewModal })),
+    { ssr: false }
+)
 
 interface ArchivedInvoiceViewOnlyProps {
     invoiceId: string
@@ -22,9 +31,31 @@ interface ArchivedInvoiceViewOnlyProps {
 
 const ArchivedInvoiceViewOnly: React.FC<ArchivedInvoiceViewOnlyProps> = ({ invoiceId, onClose }) => {
     const { data: invoice, isLoading, error } = useArchivedInvoice(invoiceId)
+    const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
+    const { templateId } = useTemplatePreference()
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
 
+    // Opens the same PDF preview used for active invoices - download/print from there
     const handleDownload = () => {
-        toast.info('PDF download coming soon')
+        if (!invoice) {
+            toast.error('Invoice information not available')
+            return
+        }
+
+        if (!shopInfo) {
+            if (isLoadingShopInfo) {
+                toast.info('Loading shop information...')
+                return
+            }
+            if (shopInfoError) {
+                toast.error('Failed to load shop information. Please refresh the page and try again.')
+                return
+            }
+            toast.error('Shop information not available')
+            return
+        }
+
+        setIsPreviewModalOpen(true)
     }
 
     const formatPhoneNumber = (phone: string | null) => {
@@ -300,19 +331,40 @@ const ArchivedInvoiceViewOnly: React.FC<ArchivedInvoiceViewOnlyProps> = ({ invoi
 
             {/* Fixed Footer with Actions */}
             <div className="bg-slate-50 dark:bg-[#131313] border-t border-border dark:border-[#333333] p-4 flex flex-wrap gap-2">
-                <Button 
+                <Button
                     size="sm"
-                    className="bg-gray-600 text-white hover:bg-gray-700" 
+                    className="bg-gray-600 text-white hover:bg-gray-700"
                     onClick={handleDownload}
+                    disabled={isLoadingShopInfo || !shopInfo}
+                    title={
+                        shopInfoError
+                            ? 'Shop information failed to load. Please refresh the page.'
+                            : isLoadingShopInfo
+                            ? 'Loading shop information...'
+                            : !shopInfo
+                            ? 'Shop information not available'
+                            : undefined
+                    }
                 >
                     <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                    {isLoadingShopInfo ? 'Loading...' : 'Download PDF'}
                 </Button>
                 <Badge variant="secondary" className="ml-auto bg-gray-700/50 dark:bg-gray-700/50 text-muted-foreground dark:text-gray-400">
                     <Archive className="h-3 w-3 mr-1" />
                     Archived
                 </Badge>
             </div>
+
+            {/* Invoice PDF Preview Modal - download / print */}
+            {isPreviewModalOpen && invoice && shopInfo && (
+                <InvoicePreviewModal
+                    invoice={invoice}
+                    shopInfo={shopInfo}
+                    templateId={templateId}
+                    isOpen={isPreviewModalOpen}
+                    onClose={() => setIsPreviewModalOpen(false)}
+                />
+            )}
         </div>
     )
 }

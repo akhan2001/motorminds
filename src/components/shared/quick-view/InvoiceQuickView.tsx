@@ -1,13 +1,15 @@
 'use client'
 
-import React from 'react'
-import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon, Receipt, Undo2 } from 'lucide-react'
+import React, { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon, Receipt, Undo2, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
 import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expenses'
 import { formatCurrency } from '@/lib/utils/currency'
@@ -16,6 +18,14 @@ import { formatPhoneNumber } from '@/lib/utils/formatters'
 import { format } from 'date-fns'
 import { ExpenseSummaryCard } from '@/app/(features)/expenses/components/ExpenseSummaryCard'
 import { MigrationMetadataView } from '@/app/(features)/financials/components/invoices/MigrationMetadataView'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { useTemplatePreference } from '@/app/(features)/financials/hooks/use-template-preference'
+
+// Lazy load the PDF preview - keeps @react-pdf/renderer out of this bundle until the user asks for it
+const InvoicePreviewModal = dynamic(
+    () => import('@/app/(features)/financials/components/invoices/InvoicePreviewModal').then(m => ({ default: m.InvoicePreviewModal })),
+    { ssr: false }
+)
 
 interface InvoiceQuickViewProps {
     invoiceId: string // invoice_number
@@ -28,6 +38,33 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
     
     // Fetch expenses from the expenses table linked to this invoice
     const { data: invoiceExpenses = [], isLoading: expensesLoading } = useExpensesByInvoice(invoice?.id || null)
+
+    // PDF download / print - same flow as the invoices page
+    const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
+    const { templateId } = useTemplatePreference()
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+
+    const handleDownload = () => {
+        if (!invoice) {
+            toast.error('Invoice information not available')
+            return
+        }
+
+        if (!shopInfo) {
+            if (isLoadingShopInfo) {
+                toast.info('Loading shop information...')
+                return
+            }
+            if (shopInfoError) {
+                toast.error('Failed to load shop information. Please refresh the page and try again.')
+                return
+            }
+            toast.error('Shop information not available')
+            return
+        }
+
+        setIsPreviewModalOpen(true)
+    }
 
     const formatDateString = (dateString: string | null | undefined) => {
         if (!dateString) return 'N/A'
@@ -164,6 +201,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
     }
 
     return (
+        <>
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#2a2a2a] [&>button:last-child]:hidden">
                 <DialogHeader className="flex-shrink-0 pb-4 border-b border-border dark:border-[#2a2a2a]">
@@ -607,7 +645,41 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                         </div>
                     </Card>
                 </div>
+
+                {/* Footer Actions */}
+                <DialogFooter className="flex-shrink-0 pt-4 border-t border-border dark:border-[#2a2a2a] sm:justify-start">
+                    <Button
+                        size="sm"
+                        onClick={handleDownload}
+                        disabled={isLoadingShopInfo || !shopInfo}
+                        title={
+                            shopInfoError
+                                ? 'Shop information failed to load. Please refresh the page.'
+                                : isLoadingShopInfo
+                                ? 'Loading shop information...'
+                                : !shopInfo
+                                ? 'Shop information not available'
+                                : 'Preview, download or print this invoice'
+                        }
+                        className="bg-gray-600 text-white hover:bg-gray-700"
+                    >
+                        <Download className="w-4 h-4 mr-2" />
+                        {isLoadingShopInfo ? 'Loading...' : 'Download PDF'}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        {/* Invoice PDF Preview Modal - download / print */}
+        {isPreviewModalOpen && shopInfo && (
+            <InvoicePreviewModal
+                invoice={invoice}
+                shopInfo={shopInfo}
+                templateId={templateId}
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+            />
+        )}
+        </>
     )
 }

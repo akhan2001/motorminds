@@ -1,15 +1,26 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { FileText, Calendar, DollarSign, User, Car, Wrench, Package, CreditCard, Clock, MapPin } from 'lucide-react'
+import { FileText, Calendar, DollarSign, User, Car, Wrench, Package, CreditCard, Clock, MapPin, Download } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
 import { formatCurrency } from '@/lib/utils/currency'
 import { MigrationMetadataView } from './MigrationMetadataView'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { useTemplatePreference } from '../../hooks/use-template-preference'
+
+// Lazy load the PDF preview - keeps @react-pdf/renderer out of this bundle until the user asks for it
+const InvoicePreviewModal = dynamic(
+    () => import('./InvoicePreviewModal').then(m => ({ default: m.InvoicePreviewModal })),
+    { ssr: false }
+)
 
 interface InvoiceDetailSheetProps {
     invoice: InvoiceWithDetails | null
@@ -22,7 +33,29 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
     isOpen,
     onClose
 }) => {
+    const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
+    const { templateId } = useTemplatePreference()
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+
     if (!invoice) return null
+
+    // Opens the same PDF preview used for active invoices - download/print from there
+    const handleDownload = () => {
+        if (!shopInfo) {
+            if (isLoadingShopInfo) {
+                toast.info('Loading shop information...')
+                return
+            }
+            if (shopInfoError) {
+                toast.error('Failed to load shop information. Please refresh the page and try again.')
+                return
+            }
+            toast.error('Shop information not available')
+            return
+        }
+
+        setIsPreviewModalOpen(true)
+    }
 
     const getStatusBadge = (status: string | null | undefined) => {
         if (!status) {
@@ -70,6 +103,7 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
     const invoiceItems = Array.isArray(invoice.invoice_items) ? invoice.invoice_items : []
 
     return (
+        <>
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent className="w-[600px] sm:w-[700px] bg-white dark:bg-[#0a0a0a] border-border dark:border-[#222222] overflow-y-auto">
                 <SheetHeader className="pb-4">
@@ -88,6 +122,26 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                     {invoice.title && (
                         <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">{invoice.title}</p>
                     )}
+                    <div className="flex items-center gap-2 pt-2">
+                        <Button
+                            size="sm"
+                            onClick={handleDownload}
+                            disabled={isLoadingShopInfo || !shopInfo}
+                            title={
+                                shopInfoError
+                                    ? 'Shop information failed to load. Please refresh the page.'
+                                    : isLoadingShopInfo
+                                    ? 'Loading shop information...'
+                                    : !shopInfo
+                                    ? 'Shop information not available'
+                                    : 'Preview, download or print this invoice'
+                            }
+                            className="bg-gray-600 text-white hover:bg-gray-700"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            {isLoadingShopInfo ? 'Loading...' : 'PDF'}
+                        </Button>
+                    </div>
                 </SheetHeader>
 
                 <div className="space-y-6">
@@ -351,5 +405,17 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                 </div>
             </SheetContent>
         </Sheet>
+
+        {/* Invoice PDF Preview Modal - download / print */}
+        {isPreviewModalOpen && shopInfo && (
+            <InvoicePreviewModal
+                invoice={invoice}
+                shopInfo={shopInfo}
+                templateId={templateId}
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+            />
+        )}
+        </>
     )
 }

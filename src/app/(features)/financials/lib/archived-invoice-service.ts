@@ -189,6 +189,15 @@ export class ArchivedInvoiceService {
             notes: data.notes,
             created_at: data.created_at,
             updated_at: data.updated_at,
+            // Payment / refund tracking - needed so archived invoices render the same PDF as active ones
+            payments: data.payments || [],
+            amount_paid: Number(data.amount_paid || 0),
+            outstanding_balance: Number(data.outstanding_balance || 0),
+            refunds: data.refunds || [],
+            total_refunded: Number(data.total_refunded || 0),
+            // Walk-in customer support
+            customer_type: data.customer_type || 'registered',
+            walk_in_vehicle_info: data.walk_in_vehicle_info,
             customer: data.customer ? {
                 id: data.customer.id,
                 customer_name: data.customer.customer_name,
@@ -201,7 +210,11 @@ export class ArchivedInvoiceService {
                 year: data.vehicle.year,
                 make: data.vehicle.make,
                 model: data.vehicle.model,
-                license_plate: data.vehicle.license_plate
+                license_plate: data.vehicle.license_plate,
+                vin: data.vehicle.vin,
+                engine_type: data.vehicle.engine_type,
+                mileage: data.vehicle.mileage,
+                color: data.vehicle.color
             } : null,
             work_order: data.work_order ? {
                 id: data.work_order.id,
