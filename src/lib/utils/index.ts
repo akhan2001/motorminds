@@ -17,3 +17,6 @@ export * from './users'
 
 // Data aggregation utilities
 export * from './aggregation'
+
+// PostgREST/Supabase filter builders
+export * from './postgrest-filters'

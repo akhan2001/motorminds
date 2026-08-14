@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/client'
+import { buildSearchFilter } from '@/lib/utils/postgrest-filters'
 
 export interface ShopData {
   id?: string
@@ -372,7 +373,7 @@ export class ShopService {
       const { data, error } = await this.supabase
         .from('shops')
         .select('*')
-        .or(`shop_name.ilike.%${query}%, shop_city.ilike.%${query}%, shop_province.ilike.%${query}%`)
+        .or(buildSearchFilter(['shop_name', 'shop_city', 'shop_province'], query))
         .order('shop_name', { ascending: true })
 
       if (error) {

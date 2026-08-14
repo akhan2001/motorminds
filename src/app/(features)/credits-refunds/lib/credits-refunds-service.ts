@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/client'
+import { buildSearchFilter } from '@/lib/utils/postgrest-filters'
 import type {
     CreditRefundItem,
     CreateCreditRefundRequest,
@@ -52,26 +53,33 @@ export class CreditsRefundsService {
                 query = query.lte('amount', filters.amount_max)
             }
 
-            if (filters.search) {
-                query = query.or(`
-                    reason.ilike.%${filters.search}%,
-                    supplier.ilike.%${filters.search}%,
-                    notes.ilike.%${filters.search}%,
-                    description.ilike.%${filters.search}%,
-                    part_number.ilike.%${filters.search}%,
-                    parts_description.ilike.%${filters.search}%,
-                    invoice_number.ilike.%${filters.search}%
-                `)
+            if (filters.search?.trim()) {
+                query = query.or(
+                    buildSearchFilter(
+                        [
+                            'reason',
+                            'supplier',
+                            'notes',
+                            'description',
+                            'part_number',
+                            'parts_description',
+                            'invoice_number',
+                        ],
+                        filters.search
+                    )
+                )
             }
 
+            // `not.archived.is.true` covers both false and NULL, so it can be
+            // combined with the search or(...) above without a second or= param.
             if (filters.archived !== undefined) {
                 if (filters.archived) {
                     query = query.eq('archived', true)
                 } else {
-                    query = query.or('archived.eq.false,archived.is.null')
+                    query = query.not('archived', 'is', true)
                 }
             } else {
-                query = query.or('archived.eq.false,archived.is.null')
+                query = query.not('archived', 'is', true)
             }
 
             query = query

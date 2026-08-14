@@ -1,5 +1,16 @@
 import { createClient } from '@/utils/supabase/client'
+import { buildSearchFilter } from '@/lib/utils/postgrest-filters'
 import { PartsRequest, CreatePartsRequestRequest, UpdatePartsRequestRequest } from '@/app/(features)/parts/types/parts'
+
+/** Columns searched by the parts request free-text search */
+const PARTS_SEARCH_COLUMNS = [
+    'parts_requested->>part_name',
+    'parts_requested->>part_number',
+    'supplier_info->>supplier_name',
+    'vehicle_info->>customer_name',
+    'notes',
+    'customer_notes',
+]
 
 export interface PartsRequestFilters {
     status?: PartsRequest['status']
@@ -62,15 +73,8 @@ export class PartsService {
             }
 
             // Text search across multiple fields
-            if (filters.search) {
-                query = query.or(`
-          parts_requested->>part_name.ilike.%${filters.search}%,
-          parts_requested->>part_number.ilike.%${filters.search}%,
-          supplier_info->>supplier_name.ilike.%${filters.search}%,
-          vehicle_info->>customer_name.ilike.%${filters.search}%,
-          notes.ilike.%${filters.search}%,
-          customer_notes.ilike.%${filters.search}%
-        `)
+            if (filters.search?.trim()) {
+                query = query.or(buildSearchFilter(PARTS_SEARCH_COLUMNS, filters.search))
             }
 
             // Pagination
@@ -532,14 +536,7 @@ export class PartsService {
                 .from('parts_requests')
                 .select('*')
                 .eq('shop_id', shopId)
-                .or(`
-          parts_requested->>part_name.ilike.%${searchTerm}%,
-          parts_requested->>part_number.ilike.%${searchTerm}%,
-          supplier_info->>supplier_name.ilike.%${searchTerm}%,
-          vehicle_info->>customer_name.ilike.%${searchTerm}%,
-          notes.ilike.%${searchTerm}%,
-          customer_notes.ilike.%${searchTerm}%
-        `)
+                .or(buildSearchFilter(PARTS_SEARCH_COLUMNS, searchTerm))
                 .order('created_at', { ascending: false })
                 .limit(limit)
 

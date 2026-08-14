@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/client'
+import { buildSearchFilter } from '@/lib/utils/postgrest-filters'
 import type {
     ExpenseItem,
     CreateExpenseRequest,
@@ -62,25 +63,27 @@ export class ExpensesService {
             }
 
             // Text search across multiple fields
-            if (filters.search) {
-                query = query.or(`
-                    description.ilike.%${filters.search}%,
-                    vendor.ilike.%${filters.search}%,
-                    invoice_number.ilike.%${filters.search}%,
-                    notes.ilike.%${filters.search}%
-                `)
+            if (filters.search?.trim()) {
+                query = query.or(
+                    buildSearchFilter(
+                        ['description', 'vendor', 'invoice_number', 'notes'],
+                        filters.search
+                    )
+                )
             }
 
             // Archive filter
+            // `not.archived.is.true` covers both false and NULL, so it can be
+            // combined with the search `or(...)` above without a second or= param.
             if (filters.archived !== undefined) {
                 if (filters.archived) {
                     query = query.eq('archived', true)
                 } else {
-                    query = query.or('archived.eq.false,archived.is.null')
+                    query = query.not('archived', 'is', true)
                 }
             } else {
                 // Default: exclude archived unless explicitly requested
-                query = query.or('archived.eq.false,archived.is.null')
+                query = query.not('archived', 'is', true)
             }
 
             // Resolution filters
@@ -104,7 +107,14 @@ export class ExpensesService {
             const { data, error, count } = await query
 
             if (error) {
-                console.error('Error fetching expenses:', error)
+                // Log the fields explicitly - a PostgrestError is an Error subclass,
+                // so logging the object alone prints `{}` and hides the real cause.
+                console.error('Error fetching expenses:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                })
                 throw new Error(`Failed to fetch expenses: ${error.message}`)
             }
 
