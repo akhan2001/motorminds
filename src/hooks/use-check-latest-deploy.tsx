@@ -20,14 +20,17 @@ function getEffectiveMinHoursNewer(minHoursNewer: number): number {
 }
 
 /**
- * Feature flag: set NEXT_PUBLIC_SHOW_REFRESH_TOAST=false to disable the toast
- * (check and API still run; toast will never be shown)
+ * Feature flag: the toast is opt-in. Set NEXT_PUBLIC_SHOW_REFRESH_TOAST=true to
+ * enable it; it stays hidden otherwise (the check and API still run, so the
+ * running commit is still logged to the console).
+ *
+ * It is off by default because a false "new version available" popup is far more
+ * costly than a missed one - users read it as the app breaking. Only turn it on
+ * once /api/deployment-commit returns a commitTime that is genuinely stable for
+ * the lifetime of a deployment.
  */
 function getShowRefreshToast(): boolean {
-    if (typeof process.env.NEXT_PUBLIC_SHOW_REFRESH_TOAST === 'string') {
-        return process.env.NEXT_PUBLIC_SHOW_REFRESH_TOAST !== 'false'
-    }
-    return true
+    return process.env.NEXT_PUBLIC_SHOW_REFRESH_TOAST === 'true'
 }
 
 /**
@@ -80,9 +83,9 @@ const DeployCheckToast = ({ id }: { id: string | number }) => {
  * 2. On first valid response, stores commitTime as "our version" (currentCommitTime).
  * 3. On later refetches, if the API returns a different commitTime (new deployment) and the new
  *    deployment is at least minHoursNewer hours newer than our deployment → show toast once.
- * 4. Toast has "Refresh" (full reload) and "Not now" (dismiss).
+ * 4. Toast has a "Refresh" button (full reload).
  *
- * Feature flag: set NEXT_PUBLIC_SHOW_REFRESH_TOAST=false to never show the toast.
+ * Feature flag: the toast is opt-in via NEXT_PUBLIC_SHOW_REFRESH_TOAST=true.
  *
  * Testing locally: set NEXT_PUBLIC_ENABLE_DEPLOYMENT_CHECK=true and
  * NEXT_PUBLIC_TEST_DEPLOYMENT_CHECK=true. Keep the tab open, change TEST_COMMIT_SHA

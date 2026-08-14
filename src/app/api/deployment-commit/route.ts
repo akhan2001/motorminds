@@ -21,9 +21,16 @@ export async function GET() {
             process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
             (process.env.NODE_ENV === 'development' ? 'dev-test' : 'unknown')
 
-        // Commit time: Vercel sets deployment time; in dev use a stable time per process so restart = new "deployment"
+        // Commit time. Vercel does not expose a deployment timestamp as a system env
+        // var, so VERCEL_DEPLOYMENT_CREATED_AT is only set if you define it yourself.
+        //
+        // Never fall back to `new Date()` here: the client stores this value on load
+        // and treats any later change as a new deployment, so a per-request timestamp
+        // reads as an endless stream of deploys and fires the refresh toast on a timer
+        // forever. 'unknown' is the correct answer when we don't know - the client
+        // skips the check entirely in that case.
         const commitTime = process.env.VERCEL_DEPLOYMENT_CREATED_AT ||
-            (process.env.VERCEL ? new Date().toISOString() : (devDeployTime ?? new Date().toISOString()))
+            (process.env.VERCEL ? 'unknown' : (devDeployTime ?? 'unknown'))
 
         return NextResponse.json(
             {
