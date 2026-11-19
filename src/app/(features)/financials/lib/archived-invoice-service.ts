@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/client'
 import { Invoice, InvoiceWithDetails } from '../types/invoice'
+import { normalizeInvoiceItems } from './invoice-calculations'
 
 const supabase = createClient()
 
@@ -180,7 +181,7 @@ export class ArchivedInvoiceService {
             parts_total: Number(data.parts_total || 0),
             services_total: Number(data.services_total || 0),
             fees_total: Number(data.fees_total || 0),
-            invoice_items: data.invoice_items || [],
+            invoice_items: normalizeInvoiceItems(data.invoice_items),
             issue_date: data.issue_date,
             due_date: data.due_date,
             paid_date: data.paid_date,

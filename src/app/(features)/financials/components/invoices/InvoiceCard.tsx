@@ -130,6 +130,11 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                     <p className={`text-base font-bold ${isPaid ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"}`}>
                         ${Number(invoice.total_amount || 0).toFixed(2)}
                     </p>
+                    {displayStatus === 'PARTIALLY PAID' && (
+                        <p className="text-xs font-semibold text-red-600 dark:text-red-500">
+                            Owing: ${Math.max(0, totalAmount - amountPaid).toFixed(2)}
+                        </p>
+                    )}
                     {invoice.tax_amount > 0 && (
                         <p className="text-xs text-muted-foreground dark:text-gray-400">
                             (Tax: ${Number(invoice.tax_amount).toFixed(2)})

@@ -21,6 +21,70 @@ export interface InvoiceCalculations {
 	packagesItems: WorkOrderItem[]
 }
 
+type LineTotalInput = {
+	item_type: string
+	quantity?: number | null
+	unit_price?: number | null
+	labor_hours?: number | null
+	total_price?: number | null
+}
+
+/**
+ * Canonical (gross) line amount for one item. This is the single source of truth
+ * for a line's value — always derived from quantity/hours × unit price, never from
+ * the stored `total_price` (which can be stale, or net of an inline line discount
+ * that is ALSO saved as its own discount row, double-counting the discount).
+ *
+ * - labor: labor_hours × unit_price
+ * - everything else: quantity × |unit_price| (discounts are positive amounts)
+ * Falls back to |total_price| only for legacy rows with no unit price at all.
+ */
+export function getLineTotal(item: LineTotalInput): number {
+	const isDiscount = item.item_type === 'discount'
+	const rawPrice = Number(item.unit_price) || 0
+	const unitPrice = isDiscount ? Math.abs(rawPrice) : rawPrice
+	const multiplier = item.item_type === 'labor'
+		? Number(item.labor_hours) || 0
+		: Number(item.quantity) || 0
+	if (unitPrice === 0 && item.total_price) {
+		const stored = Number(item.total_price) || 0
+		return isDiscount ? Math.abs(stored) : stored
+	}
+	return multiplier * unitPrice
+}
+
+/**
+ * Return invoice items with total_price recomputed via getLineTotal, so every
+ * display (view, PDF templates, previews, editor) agrees with the stored invoice
+ * total and the work order. Expenses (tracking only) are left untouched.
+ */
+export function normalizeInvoiceItems<T extends LineTotalInput>(items: T[] | null | undefined): T[] {
+	if (!Array.isArray(items)) return []
+	return items.map(item =>
+		item.item_type === 'expense' ? item : { ...item, total_price: getLineTotal(item) }
+	)
+}
+
+/**
+ * Subtotal / tax / total for a list of invoice items, using the same rules as the
+ * stored invoice totals: declined items and expenses (tracking only) are excluded,
+ * discounts are subtracted.
+ */
+export function computeInvoiceSummary(
+	items: Array<LineTotalInput & { active?: boolean | null }>,
+	taxRate: number,
+	invoiceDiscount = 0
+): { subtotal: number; tax: number; total: number } {
+	const subtotal = (items || [])
+		.filter((item: any) => item.active !== false && item.item_type !== 'expense')
+		.reduce((sum, item) => {
+			const amount = getLineTotal(item)
+			return item.item_type === 'discount' ? sum - amount : sum + amount
+		}, 0)
+	const tax = subtotal * (Number(taxRate) || 0)
+	return { subtotal, tax, total: subtotal + tax - (Number(invoiceDiscount) || 0) }
+}
+
 /**
  * Calculate invoice totals from work order items, excluding rejected items
  */
@@ -39,46 +103,20 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	const packagesItems = approvedItems.filter(item => item.item_type === 'package')
 	
 	// Calculate totals for approved items only
-	const labourTotal = labourItems.reduce((sum, item) => {
-		// For labor: labor_hours * unit_price
-		const total = (item.labor_hours || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
+	// All line amounts go through getLineTotal (labor: hours × rate, others: qty × price;
+	// discounts are positive amounts subtracted below)
+	const sumLines = (list: WorkOrderItem[]) => list.reduce((sum, item) => sum + getLineTotal(item), 0)
 
-	const partsTotal = partsItems.reduce((sum, item) => {
-		// For parts: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
+	const labourTotal = sumLines(labourItems)
+	const partsTotal = sumLines(partsItems)
 
 	// Expenses are excluded from calculations (tracking only)
 	const expensesTotal = 0
 
-	const servicesTotal = servicesItems.reduce((sum, item) => {
-		// For services: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
-	
-	const feesTotal = feesItems.reduce((sum, item) => {
-		// For fees: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
-	
-	const discountsTotal = discountsItems.reduce((sum, item) => {
-		// For discounts: quantity * unit_price (always use positive values)
-		// Discounts are stored as positive values and subtracted in calculations
-		const unitPrice = Math.abs(item.unit_price || 0)
-		const total = (item.quantity || 0) * unitPrice
-		return sum + total
-	}, 0)
-	
-	const packagesTotal = packagesItems.reduce((sum, item) => {
-		// For packages: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
+	const servicesTotal = sumLines(servicesItems)
+	const feesTotal = sumLines(feesItems)
+	const discountsTotal = sumLines(discountsItems)
+	const packagesTotal = sumLines(packagesItems)
 	
 	// Subtract discounts from subtotal (discounts reduce the total)
 	// Expenses are excluded from subtotal calculation (tracking only)

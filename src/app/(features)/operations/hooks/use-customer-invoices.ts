@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import type { InvoiceWithDetails } from '../../financials/types/invoice'
+import { normalizeInvoiceItems } from '../../financials/lib/invoice-calculations'
 
 const supabase = createClient()
 
@@ -71,7 +72,7 @@ export function useCustomerInvoices(
                 parts_total: Number(invoice.parts_total || 0),
                 services_total: Number(invoice.services_total || 0),
                 fees_total: Number(invoice.fees_total || 0),
-                invoice_items: invoice.invoice_items || [],
+                invoice_items: normalizeInvoiceItems(invoice.invoice_items),
                 // Ensure relations are properly structured (Supabase returns them as single objects, not arrays)
                 customer: invoice.customer ? {
                     id: invoice.customer.id,
@@ -103,4 +104,4 @@ export function useCustomerInvoices(
         enabled: !!customerId && !!shopId && customerId !== null && customerId !== '' && customerId !== 'new' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId),
         staleTime: 2 * 60 * 1000, // 2 minutes
     })
-}
+}

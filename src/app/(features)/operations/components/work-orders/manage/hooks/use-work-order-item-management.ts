@@ -16,6 +16,64 @@ import type {
 // Re-export for backwards compatibility
 export type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem }
 
+type ItemsByType = {
+    labor: LaborFormItem[]
+    parts: PartFormItem[]
+    expenses: ExpenseFormItem[]
+    services: GenericFormItem[]
+    fees: GenericFormItem[]
+    discounts: GenericFormItem[]
+    packages: GenericFormItem[]
+}
+
+/**
+ * Convert in-progress form state into WorkOrderItem[] exactly as it will be saved:
+ * line totals are gross, and any inline `line_discount` becomes its own discount
+ * row (mirroring handleSaveAll). Feed the result to calculateInvoiceTotals for
+ * live totals that match what the saved work order / invoice will show.
+ */
+export function formItemsToLiveWorkOrderItems(
+    itemsByType: ItemsByType,
+    workOrderId: string,
+    shopId: string
+): WorkOrderItem[] {
+    const now = new Date().toISOString()
+    const out: WorkOrderItem[] = []
+    const push = (item: any, item_type: WorkOrderItem['item_type']) => {
+        out.push({
+            ...item,
+            item_type,
+            work_order_id: workOrderId,
+            shop_id: shopId,
+            active: item.active ?? true,
+            created_at: now,
+        } as WorkOrderItem)
+        const lineDiscount = Number(item.line_discount) || 0
+        if ((item_type === 'labor' || item_type === 'service') && lineDiscount > 0 && item.active !== false) {
+            out.push({
+                id: `${item.id}-line-discount`,
+                item_type: 'discount',
+                description: `Line discount: ${item.description || ''}`,
+                quantity: 1,
+                unit_price: lineDiscount,
+                total_price: lineDiscount,
+                work_order_id: workOrderId,
+                shop_id: shopId,
+                active: true,
+                created_at: now,
+            } as WorkOrderItem)
+        }
+    }
+    itemsByType.labor.forEach(i => push(i, 'labor'))
+    itemsByType.parts.forEach(i => push(i, 'part'))
+    itemsByType.expenses.forEach(i => push(i, 'expense'))
+    itemsByType.services.forEach(i => push(i, 'service'))
+    itemsByType.fees.forEach(i => push(i, 'fee'))
+    itemsByType.discounts.forEach(i => push(i, 'discount'))
+    itemsByType.packages.forEach(i => push(i, 'package'))
+    return out
+}
+
 interface UseWorkOrderItemManagementProps {
     workOrderId: string
     initialItems: WorkOrderItem[]
@@ -456,8 +514,16 @@ export function useWorkOrderItemManagement({
         shopId,
     ])
 
+    // Unsaved, in-progress items in WorkOrderItem shape — lets the cost summary and
+    // running total recalculate in real time while the user edits.
+    const liveItems = useMemo(
+        () => formItemsToLiveWorkOrderItems(itemsByType, workOrderId, shopId || ''),
+        [itemsByType, workOrderId, shopId]
+    )
+
     return {
         itemsByType,
+        liveItems,
         laborItems,
         partsItems,
         serviceItems,

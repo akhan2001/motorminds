@@ -13,6 +13,7 @@ import { Loader2, Save, Plus, Trash2, User, Car, X, LayoutIcon, FileText } from 
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
+import { getLineTotal } from '../../lib/invoice-calculations'
 import { toast } from 'sonner'
 import { CustomerInformation } from '../../../operations/components/work-orders/shared/customer-information'
 import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
@@ -205,7 +206,10 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 const isExpandable = (item.item_type === 'labor' || item.item_type === 'service') && lineDiscount > 0
                 if (isExpandable) {
                     const { line_discount, ...rest } = item
-                    expandedItems.push(rest)
+                    // The editor shows total_price net of the line discount. Since the
+                    // discount is saved as its own row, store the GROSS line amount here —
+                    // otherwise the discount is counted twice on the invoice.
+                    expandedItems.push({ ...rest, total_price: getLineTotal(rest) })
                     expandedItems.push({
                         id: crypto.randomUUID(),
                         item_type: 'discount',
@@ -216,7 +220,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                     })
                 } else {
                     const { line_discount: _drop, ...rest } = item
-                    expandedItems.push(rest)
+                    // Keep stored total_price in step with qty/hours × price
+                    expandedItems.push(rest.item_type === 'expense' ? rest : { ...rest, total_price: getLineTotal(rest) })
                 }
             })
 

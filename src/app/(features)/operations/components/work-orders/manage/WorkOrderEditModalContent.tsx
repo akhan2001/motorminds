@@ -87,7 +87,8 @@ export function WorkOrderEditModalContent({
                                 workOrderId={workOrder.id}
                                 workOrderDetails={workOrderDetails}
                                 summary={summary}
-                                workOrderItems={items}
+                                // Live (unsaved) items so the cost summary updates in real time
+                                workOrderItems={itemManagement.liveItems}
                             />
                         </ResizablePanel>
                     </ResizablePanelGroup>

@@ -1,20 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, InvoiceStats, InvoiceItem } from '../types/invoice'
-import { calculateInvoiceTotals, convertInvoiceItemsToWorkOrderItems } from '../lib/invoice-calculations'
+import { calculateInvoiceTotals, convertInvoiceItemsToWorkOrderItems, normalizeInvoiceItems } from '../lib/invoice-calculations'
 import { mergeAdvancePaymentsIntoInvoice, calculateInvoicePaymentTotals } from '../lib/invoice-advance-payment-helper'
 
 const supabase = createClient()
 
-// Fetch all invoices for a shop (default limit 1000 so list shows all recent invoices)
-export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: number = 1000, offset: number = 0) {
+export type InvoicePaymentFilter = 'all' | 'unpaid' | 'paid'
+
+// Statuses that still have money owing (used by the "Unpaid" filter)
+export const UNPAID_INVOICE_STATUSES = ['unpaid', 'partially_paid', 'draft', 'sent', 'overdue']
+
+// Strip characters that would break a PostgREST or() / ilike expression
+function sanitizeSearchTerm(term: string): string {
+    return term.replace(/[,()*%\\:"']/g, ' ').trim()
+}
+
+// Fetch all invoices for a shop (default limit 1000 so list shows all recent invoices).
+// `options.search` and `options.payment` are applied server-side so older invoices
+// (beyond the most recent `limit`) are still found.
+export function useInvoices(
+    shopId: string,
+    filters?: InvoiceFilters,
+    limit: number = 1000,
+    offset: number = 0,
+    options?: { search?: string; payment?: InvoicePaymentFilter }
+) {
+    const search = sanitizeSearchTerm(options?.search || '')
+    const payment = options?.payment || 'all'
     return useQuery({
-        queryKey: ['invoices', shopId, filters, limit, offset],
+        queryKey: ['invoices', shopId, filters, limit, offset, search, payment],
+        placeholderData: (previous) => previous,
         queryFn: async () => {
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes, payments, amount_paid, outstanding_balance, migration_metadata,
+                    id, invoice_number, display_id, shop_id, customer_id, customer_type, walk_in_vehicle_info, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes, payments, amount_paid, outstanding_balance, payment_method, migration_metadata,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
                     vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
@@ -48,6 +69,36 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: num
             }
             if (filters?.work_order_id) {
                 query = query.eq('work_order_id', filters.work_order_id)
+            }
+
+            if (payment === 'unpaid') {
+                query = query.in('status', UNPAID_INVOICE_STATUSES)
+            } else if (payment === 'paid') {
+                query = query.eq('status', 'paid')
+            }
+
+            if (search) {
+                // Customer names live in another table: resolve matching customers first
+                const { data: customers } = await supabase
+                    .from('customers')
+                    .select('id')
+                    .eq('shop_id', shopId)
+                    .ilike('customer_name', `%${search}%`)
+                    .limit(200)
+                const customerIds = (customers || []).map(c => c.id)
+
+                const orParts = [
+                    `invoice_number.ilike.%${search}%`,
+                    `display_id.ilike.%${search}%`,
+                    `title.ilike.%${search}%`,
+                    `walk_in_vehicle_info->>license_plate.ilike.%${search}%`,
+                    `walk_in_vehicle_info->>make.ilike.%${search}%`,
+                    `walk_in_vehicle_info->>model.ilike.%${search}%`,
+                ]
+                if (customerIds.length > 0) {
+                    orParts.push(`customer_id.in.(${customerIds.join(',')})`)
+                }
+                query = query.or(orParts.join(','))
             }
 
             const { data, error } = await query
@@ -90,7 +141,13 @@ export function useInvoice(invoiceId: string, options?: { includeArchived?: bool
                 console.error('Error fetching invoice:', errMsg, error)
                 throw new Error(`Failed to fetch invoice: ${errMsg}`)
             }
-            return (Array.isArray(data) ? data[0] : data) as InvoiceWithDetails | null
+            const invoice = (Array.isArray(data) ? data[0] : data) as InvoiceWithDetails | null
+            if (invoice && Array.isArray(invoice.invoice_items)) {
+                // Line amounts are always derived from qty/hours × price so the view,
+                // PDFs and Payments section agree with the stored invoice total.
+                invoice.invoice_items = normalizeInvoiceItems(invoice.invoice_items)
+            }
+            return invoice
         },
         enabled: !!invoiceId
     })

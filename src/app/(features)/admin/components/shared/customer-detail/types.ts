@@ -69,8 +69,11 @@ export interface Appointment {
 export interface Invoice {
     id: string
     invoice_number: string
+    display_id?: string | null
     status: string
     total_amount: number
+    amount_paid?: number | null
+    outstanding_balance?: number | null
     issue_date: string
     due_date?: string
     paid_date?: string

@@ -150,13 +150,14 @@ export async function GET(
         }
 
         // Fetch invoices for the customer
-        let invoicesQuery = queryClient
-            .from('invoices_table')
-            .select(`
+        const invoiceSelect = `
                 id,
                 invoice_number,
+                display_id,
                 status,
                 total_amount,
+                amount_paid,
+                outstanding_balance,
                 issue_date,
                 due_date,
                 paid_date,
@@ -179,17 +180,38 @@ export async function GET(
                     id,
                     shop_name
                 )
-            `)
-            .eq('customer_id', customerId)
-        
-        // Apply shop filter if needed
-        if (shopFilter && shopFilter.length > 0) {
-            invoicesQuery = invoicesQuery.in('shop_id', shopFilter)
+            `
+        const buildInvoicesQuery = () => {
+            let q = queryClient
+                .from('invoices_table')
+                .select(invoiceSelect)
+                .eq('customer_id', customerId)
+            // Apply shop filter if needed
+            if (shopFilter && shopFilter.length > 0) {
+                q = q.in('shop_id', shopFilter)
+            }
+            return q
         }
-        
-        const { data: invoices, error: invoicesError } = await invoicesQuery
-            .order('issue_date', { ascending: false })
-            .limit(100)
+
+        // Latest 100 invoices, PLUS every unpaid invoice regardless of age so
+        // outstanding balances are never hidden behind the 100-row limit
+        const [recentResult, unpaidResult] = await Promise.all([
+            buildInvoicesQuery()
+                .order('issue_date', { ascending: false })
+                .limit(100),
+            buildInvoicesQuery()
+                .in('status', ['unpaid', 'partially_paid', 'draft', 'sent', 'overdue'])
+                .order('issue_date', { ascending: false })
+                .limit(500),
+        ])
+        const invoicesError = recentResult.error || unpaidResult.error
+        const invoiceMap = new Map<string, any>()
+        for (const inv of [...(recentResult.data || []), ...(unpaidResult.data || [])] as any[]) {
+            invoiceMap.set(inv.id, inv)
+        }
+        const invoices = Array.from(invoiceMap.values()).sort(
+            (a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
+        )
 
         if (invoicesError) {
             console.error('Error fetching invoices:', invoicesError)

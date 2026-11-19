@@ -15,6 +15,8 @@ import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } fr
 import type { ExpenseListItemFormData } from '@/app/(features)/expenses/lib/validations/expense-schema'
 import type { ExpenseListItemFormData } from '@/app/(features)/expenses/lib/validations/expense-schema'
 import { partToExpenseItem } from '../../../lib/part-to-expense'
+import { formItemsToLiveWorkOrderItems } from './hooks/use-work-order-item-management'
+import { calculateInvoiceTotals } from '@/app/(features)/financials/lib/invoice-calculations'
 
 interface WorkOrderItemsSectionProps {
     itemsByType: {
@@ -57,36 +59,29 @@ export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderIt
     const hasLegacyFees = itemsByType.fees.length > 0
     const hasLegacyPackages = itemsByType.packages.length > 0
 
-    // Calculate live totals from local state
+    // Calculate live totals from local (unsaved) state using the SAME calculation as the
+    // saved work order and the invoice: declined items excluded, expenses tracking-only,
+    // line discounts and discount rows subtracted.
     const liveTotals = useMemo(() => {
-        const laborTotal = itemsByType.labor.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const partsTotal = itemsByType.parts.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const expensesTotal = expensesTotalFromTable
-        const servicesTotal = itemsByType.services.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const feesTotal = itemsByType.fees.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const discountsTotal = itemsByType.discounts.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const packagesTotal = itemsByType.packages.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        
-        // Subtotal excludes expenses (tracking only) and subtracts discounts
-        const subtotal = laborTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
+        const liveItems = formItemsToLiveWorkOrderItems(itemsByType, workOrderId, '')
+        const calc = calculateInvoiceTotals(liveItems)
         const taxRate = 0.13
-        const taxAmount = subtotal * taxRate
-        const total = subtotal + taxAmount
-        
+        const taxAmount = calc.subtotal * taxRate
+
         return {
-            laborTotal,
-            partsTotal,
-            expensesTotal,
-            servicesTotal,
-            feesTotal,
-            discountsTotal,
-            packagesTotal,
-            subtotal,
+            laborTotal: calc.labourTotal,
+            partsTotal: calc.partsTotal,
+            expensesTotal: expensesTotalFromTable,
+            servicesTotal: calc.servicesTotal,
+            feesTotal: calc.feesTotal,
+            discountsTotal: calc.discountsTotal,
+            packagesTotal: calc.packagesTotal,
+            subtotal: calc.subtotal,
             taxAmount,
-            total,
-            hasItems: laborTotal > 0 || partsTotal > 0 || servicesTotal > 0 || feesTotal > 0 || packagesTotal > 0
+            total: calc.subtotal + taxAmount,
+            hasItems: calc.approvedItems.some(i => i.item_type !== 'expense'),
         }
-    }, [itemsByType, expensesTotalFromTable])
+    }, [itemsByType, workOrderId, expensesTotalFromTable])
 
     // Memoized callbacks to prevent unnecessary re-renders of child components
     const handleLaborChange = useCallback((items: LaborFormItem[]) => {
